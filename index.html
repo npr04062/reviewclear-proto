@@ -385,6 +385,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 .bar .submit .fine{font-size:12.5px;color:var(--md-on-surface-variant);max-width:52ch}
 .hero .hint-w{margin-top:12px;color:rgba(255,255,255,.82);font-size:13px}
 @media (max-width:600px){.bar .paste{flex-wrap:wrap}.bar .paste>.msym{display:none}.bar .paste input{flex:1 0 100%;padding:0 10px}.btn-go{width:100%;justify-content:center}}
+.done .next-line{margin-top:16px;font-size:16px;line-height:1.6;color:var(--md-on-surface)}
 </style>
 </head>
 <body>
@@ -672,12 +673,7 @@ function viewDone(id){const o=S.orders.find(x=>x.id===id);if(!o)return viewNotFo
   return topbar('구글 리뷰 삭제')+`<div class="done">
   <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${esc(o.contact.name)} 담당자님, 리뷰 ${its.length}건을 접수했습니다.</h2>
   <div class="idbox"><div class="small muted">접수번호</div><div class="id">${esc(o.id)}</div><div class="small muted" style="margin-top:8px">조회 링크</div><div class="linkbox"><input readonly value="${esc(statusUrl(o.id))}" id="statusLink"><button class="btn btn-outlined btn-sm" type="button" data-action="copy" data-target="statusLink">복사</button></div></div>
-  <ul class="timeline">
-    <li><span class="t">지금</span><span>접수 확인 알림톡 발송</span></li>
-    <li><span class="t">24시간 안에</span><span>가능 여부 안내</span></li>
-    <li><span class="t">평균 2주</span><span>삭제 작업</span></li>
-    <li><span class="t">확인 당일</span><span>삭제 확인 알림톡과 청구서 발송 (${krw(PRICE)} × 건수, VAT 별도)</span></li>
-  </ul>
+  <p class="next-line">24시간 안에 가능 여부를 알려드리고, 삭제가 확인된 뒤에만 청구서를 보냅니다.</p>
   <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-tonal" href="#/status/${esc(o.id)}">접수 현황</a><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 function viewNotFound(){return topbar('구글 리뷰 삭제')+`<div class="done"><h2>접수번호를 찾을 수 없습니다.</h2><p class="muted" style="margin-top:8px">형식은 RR-YYMMDD-000입니다. 접수 때 받은 조회 링크를 확인해 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 
