@@ -521,7 +521,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
-<footer><div class="wrap"><span>리뷰지우개 · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
+<footer><div class="wrap"><span>리뷰지우개 · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="privacy/">개인정보처리방침</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
 <a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a></div>
 <div class="toast" id="toast"></div>
 <script>
@@ -759,7 +759,7 @@ function viewOrder(){
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
-<footer><div class="wrap"><span>${BRAND} · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
+<footer><div class="wrap"><span>${BRAND} · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="privacy/">개인정보처리방침</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
 <a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>`;
 }
 function sheetRowHtml(n,v){v=v||{};return `<tr><td class="n">${n}</td><td><input class="link" name="url" aria-label="리뷰 링크" placeholder="https://maps.app.goo.gl/…" value="${esc(v.url||'')}" autocomplete="off"></td><td><button type="button" class="rm" data-action="rm-row">삭제</button></td></tr>`}
