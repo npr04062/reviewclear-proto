@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="구글 지도 악성 리뷰 삭제, 국내 유일 후불제. 리뷰 링크만 붙여넣으면 접수. 지워진 건만 건당 250,000원, 못 지우면 0원. 외국인 환자 병원 전용.">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://npr04062.github.io/reviewclear-proto/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="리뷰클리어 · 후불제 구글 리뷰 삭제">
+<meta property="og:description" content="리뷰 삭제되지 않으면 돈 안 받습니다. 구글 리뷰 링크만 붙여넣으면 접수됩니다.">
+<meta property="og:url" content="https://npr04062.github.io/reviewclear-proto/">
+<meta property="og:locale" content="ko_KR">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"리뷰클리어 구글 리뷰 삭제","serviceType":"구글 지도 리뷰 삭제 대행 (후불제)","areaServed":"KR","provider":{"@type":"Organization","name":"리뷰클리어"},"offers":{"@type":"Offer","price":"250000","priceCurrency":"KRW","description":"삭제 확인 후 청구, VAT 별도. 못 지우면 0원."}}</script>
 <title>리뷰클리어 · 후불제 구글 리뷰 삭제</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -832,6 +840,7 @@ function render(){
   else if(p[0]==='order'&&p[1]==='done'){view='done';html=viewDone(dec(p[2]||''))}
   else{view='landing';html=viewOrder()}
   app.innerHTML=html;currentView=view;
+  const pb=document.getElementById('protobar');if(pb){pb.hidden=!(key==='worker'||key==='settle');pbh()}
   document.querySelectorAll('#protobar nav a').forEach(a=>a.classList.toggle('on',a.dataset.nav===key));
   if(landing){mountOrderForm();const el=anchor?document.getElementById(anchor):null;if(el)el.scrollIntoView();else window.scrollTo(0,0)}
   else window.scrollTo(0,0);
