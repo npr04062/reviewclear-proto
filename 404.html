@@ -513,6 +513,110 @@ function isReviewUrl(u){u=normUrl(u);if(!u||/\s/.test(u))return false;let x;try{
 const shortUrl=u=>{try{const x=new URL(u);return x.hostname.replace(/^www\./,'')+(x.pathname.length>18?x.pathname.slice(0,18)+'…':x.pathname)}catch(e){return u}};
 const linkA=u=>`<a class="link" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(u)}">${esc(shortUrl(u))}</a>`;
 function fmtEok(n){if(n>=1e8)return (Math.round(n/1e7)/10).toLocaleString('ko-KR')+'억 원';if(n>=1e4)return Math.round(n/1e4).toLocaleString('ko-KR')+'만 원';return krw(n)}
+
+/* ---------- view: order landing ---------- */
+function viewOrder(){
+  return topbar('구글 리뷰 삭제',`<a href="#/order" class="muted" style="text-decoration:none">서비스 안내</a><a class="btn btn-filled btn-sm" href="#order-form">리뷰 삭제하기</a>`)+`
+<section class="hero"><div class="wrap">
+  <div>
+    <div class="eyebrow">외국인 환자 병원 전용</div>
+    <h1>국내 유일 후불제<br>리뷰 삭제 서비스</h1>
+    <p class="sub">외국인 환자 200만 시대, 악성 리뷰 하나에 외국인 환자 전부 도망갑니다.<br>리뷰 삭제되지 않으면 돈 안 받습니다.</p>
+    <div class="cta"><a class="btn btn-filled" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a></div>
+  </div>
+  <figure class="phone-mock"><img src="${IMG_SHOT}" width="780" height="1966" alt="외국인 환자가 남긴 별 1개 구글 리뷰 예시 화면"><figcaption>예시 화면. 별 1개 리뷰는 이렇게 첫 화면에 뜹니다.</figcaption></figure>
+</div></section>
+<div class="wrap"><div class="facts">
+  <div><div class="v num">250,000<small>원 / 건</small></div><div class="l">VAT 별도 · 후불</div></div>
+  <div><div class="v num">0<small>원</small></div><div class="l">못 지우면</div></div>
+  <div><div class="v num">2<small>주</small></div><div class="l">평균 처리 기간</div></div>
+</div></div>
+
+<section class="section" id="risk"><div class="wrap">
+  <div class="eyebrow">외국인 환자 이탈</div><h2>리뷰 하나에 외국인 환자가 얼마나 도망갈까요?</h2>
+  <div class="risk-grid">
+    <figure class="risk-img"><img src="${IMG_HOOK}" width="1400" height="939" loading="lazy" alt="왼쪽 별 1개 병원은 대기 환자가 없고, 오른쪽 별 5개 병원 앞에는 외국인 환자가 줄을 서 있는 그림"><figcaption>AI 생성 이미지</figcaption></figure>
+    <div class="stats">
+      <div class="stat one"><span class="ic"><span class="msym">star</span></span><div class="l">외국인 환자는 별점부터 봅니다.</div></div>
+      <div class="stat one"><span class="ic"><span class="msym">event_busy</span></span><div class="l">악성 리뷰 하나에 예약이 끊깁니다.</div></div>
+      <div class="stat one"><span class="ic"><span class="msym">person_add</span></span><div class="l">리뷰가 사라지면 환자는 돌아옵니다.</div></div>
+    </div>
+  </div>
+</div></section>
+
+<section class="section" style="background:var(--bg-2);padding-top:56px"><div class="wrap">
+  <div class="eyebrow">의뢰 병원</div><h2>이런 병원이 맡깁니다.</h2>
+  <div class="claim"><div class="big">리뷰 1개가 좌우하는 매출 300만~400만원</div><p>해외 업체 기준입니다. 외국인 환자 단가가 높은 피부과·성형외과는 더 클 수 있습니다.</p></div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="who"><div class="ic"><span class="msym">face</span></div><h4>피부과</h4><p>외국인 환자가 가장 많이 찾는 진료과입니다. 상담은 구글 지도에서 시작됩니다.</p></div>
+    <div class="who"><div class="ic"><span class="msym">face_retouching_natural</span></div><h4>성형외과</h4><p>수술 전 리뷰를 꼼꼼히 보는 환자가 많습니다. 별점 테러와 허위 부작용 리뷰에 대응합니다.</p></div>
+    <div class="who"><div class="ic"><span class="msym">dentistry</span></div><h4>치과 · 검진 · 한의원</h4><p>임플란트, 검진, 한방 치료로 오는 외국인 환자. 해외 계정이 남긴 리뷰도 같은 절차로 진행합니다.</p></div>
+  </div>
+</div></section>
+
+<section class="section"><div class="wrap">
+  <div class="eyebrow">진행</div><h2>혼자 싸우지 마세요.</h2>
+  <p class="lead">접수부터 청구까지 네 단계로 진행합니다.</p>
+  <div class="steps">
+    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 표에 붙여넣으세요. 여러 건도 한 번에 접수할 수 있습니다.</p><span class="w">1분</span></div>
+    <div class="step"><div class="ic"><span class="msym">mark_email_read</span></div><div class="n">02</div><h4>회신</h4><p>삭제 가능 여부를 24시간 안에 알려드립니다.</p><span class="w">24시간</span></div>
+    <div class="step"><div class="ic"><span class="msym">delete_sweep</span></div><div class="n">03</div><h4>삭제</h4><p>사진이 있거나 오래된 리뷰도 진행합니다.</p><span class="w">평균 2주</span></div>
+    <div class="step"><div class="ic"><span class="msym">receipt_long</span></div><div class="n">04</div><h4>청구</h4><p>삭제를 확인한 건만 청구서를 보내드립니다.</p><span class="w">당일</span></div>
+  </div>
+</div></section>
+
+<section class="section" style="background:var(--bg-2)"><div class="wrap">
+  <div class="eyebrow">가격</div><h2>해외 업체 평균 $1,500. 저희는 250,000원 후불입니다.</h2>
+  <p class="lead">글로벌 제휴망을 활용해 비용을 낮췄습니다.</p>
+  <div class="compare" style="margin-top:26px">
+    <div class="price-card"><div class="tag">해외 삭제 대행</div><div class="amount">선결제</div><p class="muted small">건당 평균 $1,500</p><ul><li><span class="msym">check</span><span>결제 후 처리 시작</span></li><li><span class="msym">check</span><span>환불 조건은 업체마다 다름</span></li></ul></div>
+    <div class="price-card us"><div class="tag">${BRAND} 후불제 <span class="badge"><span class="msym s18">verified</span>추천</span></div><div class="amount num">250,000<small>원 / 건 · VAT 별도</small></div><p class="muted small">삭제 확인일 청구서 발송 · 계좌이체</p><ul><li><span class="msym">check</span><span>삭제 후 청구</span></li><li><span class="msym">check</span><span>삭제하지 못하면 0원</span></li><li><span class="msym">check</span><span>14일 안에 다시 올라오면 무상 재삭제</span></li><li><span class="msym">check</span><span>세금계산서 발행</span></li></ul></div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:20px"><div class="wrap-n faq">
+  <div class="eyebrow">FAQ</div><h2 style="margin-bottom:16px">궁금한 점</h2>
+  <details><summary>어떤 리뷰를 지울 수 있나요?</summary><p>내원 이력이 없는 계정이 남긴 비방이나 별점 테러, 허위 부작용 리뷰가 주 대상입니다. 실제 환자의 불만은 삭제가 어려울 수 있습니다. 이 경우 24시간 안에 알려드립니다.</p></details>
+  <details><summary>얼마나 걸리나요?</summary><p>평균 2주, 길면 4주입니다.</p></details>
+  <details><summary>리뷰 링크는 어떻게 얻나요?</summary><p>구글 지도에서 리뷰 옆 더보기 메뉴를 열고 '리뷰 공유'를 누르면 링크가 복사됩니다. 어려우면 카카오톡 채널로 문의하세요.</p></details>
+  <details><summary>외국어 리뷰도 되나요?</summary><p>네. 해외 계정이 쓴 리뷰도 주요 대상입니다.</p></details>
+  <details><summary>결제는 언제 하나요?</summary><p>삭제가 확인된 날 청구서와 세금계산서를 보내드립니다. 계좌이체이며 선결제는 없습니다.</p></details>
+  <details><summary>지운 리뷰가 다시 올라오면요?</summary><p>삭제 후 14일간 확인합니다. 다시 올라오면 무상으로 지워드립니다.</p></details>
+</div></section>
+
+<section class="section" id="order-form" style="background:var(--bg-2)"><div class="wrap">
+  <form class="form" id="orderForm" novalidate>
+    <div class="eyebrow">접수</div><h3>어떤 리뷰를 지워드릴까요?</h3><p class="muted small">접수가 끝나면 접수번호를 바로 드립니다. 결제 정보는 받지 않습니다.</p>
+    <div class="row2">
+      <div class="field"><div class="md-field"><input id="f-business" name="business" required placeholder=" "><label for="f-business">병원명<span class="req">*</span></label></div><div class="help">예) OO피부과의원 (강남)</div><div class="err">병원명을 입력해 주세요.</div></div>
+      <div class="field"><div class="md-field"><input id="f-maps" name="mapsUrl" placeholder=" "><label for="f-maps">구글 지도 병원 링크</label></div><div class="help">있으면 확인이 빨라집니다.</div></div>
+    </div>
+    <div class="sec-h" style="margin:22px 0 8px"><h3 style="font-size:15px;font-weight:800">삭제 요청 리뷰</h3><span class="hint">한 줄에 리뷰 1건씩 입력하세요. 엑셀이나 카카오톡에서 복사해 붙여넣을 수 있습니다.</span></div>
+    <div class="sheet-wrap"><table class="sheet" id="reviewSheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:300px">리뷰 링크 <span style="color:var(--pink-ink)">*</span></th><th scope="col" style="min-width:140px">작성자 표시 이름</th><th scope="col" style="min-width:220px">리뷰 첫 문장 (선택)</th><th scope="col" style="width:60px"></th></tr></thead><tbody id="sheetBody"></tbody></table></div>
+    <div class="sheet-err" id="sheetErr"></div>
+    <div class="sheet-tools"><button type="button" class="btn btn-outlined btn-sm" data-action="add-row"><span class="msym s18">add</span>행 추가</button><button type="button" class="btn btn-outlined btn-sm" data-action="toggle-bulk">여러 링크 한 번에 붙여넣기</button><span class="sum" id="sheetSum"></span></div>
+    <div class="bulk hidden" id="bulkBox"><textarea id="bulkText" placeholder="링크를 한 줄에 하나씩. 엑셀에서 복사하면 링크·작성자·첫 문장 열이 그대로 들어갑니다."></textarea><div class="row"><button type="button" class="btn btn-tonal btn-sm" data-action="bulk-add">표에 추가</button></div></div>
+    <div class="row2" style="margin-top:6px">
+      <div class="field"><div class="md-field"><input id="f-cname" name="cname" required placeholder=" "><label for="f-cname">담당자<span class="req">*</span></label></div><div class="help">실장, 코디네이터, 원장</div><div class="err">담당자 성함을 입력해 주세요.</div></div>
+      <div class="field"><div class="md-field"><input id="f-phone" name="phone" inputmode="tel" required placeholder=" "><label for="f-phone">휴대폰<span class="req">*</span></label></div><div class="help">010-0000-0000</div><div class="err">휴대폰 번호를 확인해 주세요.</div></div>
+    </div>
+    <div class="row2">
+      <div class="field"><div class="md-field"><input id="f-email" name="email" type="email" placeholder=" "><label for="f-email">이메일</label></div><div class="help">세금계산서 수신용</div><div class="err">이메일 형식을 확인해 주세요.</div></div>
+      <div class="field"><div class="md-field"><input id="f-kakao" name="kakao" placeholder=" "><label for="f-kakao">카카오톡 ID</label></div></div>
+    </div>
+    <div class="field"><div class="md-field"><textarea id="f-note" name="note" rows="3" placeholder=" "></textarea><label for="f-note">요청사항</label></div><div class="help">내원 이력, 경쟁 병원 추정 근거 등</div></div>
+    <label class="agree"><input type="checkbox" name="agree"><span>지워진 건만 건당 250,000원(VAT 별도)이 청구되고, 못 지운 건은 비용이 없음을 확인합니다.<span class="req">*</span></span></label>
+    <div class="err" id="agreeErr" style="font-size:12.5px;color:var(--bad);display:none;margin-top:6px">청구 조건에 동의해야 접수할 수 있습니다.</div>
+    <div class="submit"><button type="submit" class="btn btn-filled"><span class="msym">send</span>접수하기</button><span class="fine">24시간 안에 가능 여부를 알림톡으로 알려드립니다.</span></div>
+  </form>
+  <div class="card pad" id="status-lookup" style="margin-top:20px;max-width:760px">
+    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) ${esc(S.orders[0].id)}</p>
+    <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
+  </div>
+</div></section>
+<footer><div class="wrap"><span>${BRAND} · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span>문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
+<a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>`;
+}
 function sheetRowHtml(n,v){v=v||{};return `<tr><td class="n">${n}</td><td><input class="link" name="url" aria-label="리뷰 링크" placeholder="https://maps.app.goo.gl/…" value="${esc(v.url||'')}" autocomplete="off"></td><td><input name="author" aria-label="작성자 표시 이름" placeholder="예) Anna P." value="${esc(v.author||'')}" autocomplete="off"></td><td><input name="snippet" aria-label="리뷰 첫 문장" placeholder="선택" value="${esc(v.snippet||'')}" autocomplete="off"></td><td><button type="button" class="rm" data-action="rm-row">삭제</button></td></tr>`}
 function renumber(){const rows=[...document.querySelectorAll('#sheetBody tr')];rows.forEach((tr,i)=>{tr.querySelector('td.n').textContent=i+1});const s=document.getElementById('sheetSum');if(s)s.textContent=rows.length+'행 · 건당 250,000원 · 지워진 건만 청구'}
 function mountOrderForm(){const tb=document.getElementById('sheetBody');if(!tb)return;tb.innerHTML=sheetRowHtml(1)+sheetRowHtml(2)+sheetRowHtml(3);renumber()}
