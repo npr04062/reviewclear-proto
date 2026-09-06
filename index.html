@@ -245,8 +245,8 @@ table.sheet{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;
 .ev-list li span{font-variant-numeric:tabular-nums;margin-right:8px;color:var(--md-outline)}
 
 /* ===== landing: hero ===== */
-.hero{background:linear-gradient(135deg,#062E6F 0%,#0B57D0 42%,#1A73E8 72%,#4285F4 100%);color:#fff;padding:64px 0 56px;position:relative}
-.hero .wrap{display:grid;grid-template-columns:1.2fr .9fr;gap:48px;align-items:center;position:relative}
+.hero{background:linear-gradient(135deg,#062E6F 0%,#0B57D0 42%,#1A73E8 72%,#4285F4 100%);color:#fff;padding:44px 0 52px;position:relative}
+.hero .wrap{display:grid;grid-template-columns:1.2fr .9fr;gap:48px;align-items:start;position:relative}
 @media (max-width:860px){.hero .wrap{grid-template-columns:1fr}}
 .hero .eyebrow{color:rgba(255,255,255,.85)}
 .hero h1{font-size:46px;font-weight:700;letter-spacing:-.5px;margin:10px 0 18px;color:#fff;line-height:1.18}
@@ -366,6 +366,25 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .pill.approved{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)}
 .sheet select.assign{height:36px;border:1px solid var(--md-outline);border-radius:4px;background:var(--md-surface);color:var(--md-on-surface);font:inherit;font-size:13px;padding:0 8px;margin-right:6px;max-width:190px}
 tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px;font-size:13.5px}
+.hero .cta{display:none}
+.bar{margin-top:22px;background:#fff;border-radius:16px;padding:8px;box-shadow:var(--e3);color:var(--md-on-surface);text-align:left}
+.bar .paste{display:flex;align-items:center;gap:6px}
+.bar .paste>.msym{color:var(--md-on-surface-variant);margin-left:10px;flex:0 0 auto}
+.bar .paste input{flex:1;min-width:0;height:52px;border:0;outline:none;font:inherit;font-size:17px;padding:0 6px;background:transparent;color:var(--md-on-surface)}
+.bar .paste input::placeholder{color:#5f6368}
+.btn-go{background:#188038;color:#fff;height:52px;padding:0 22px;border-radius:12px;font-size:16px;flex:0 0 auto}
+.btn-go:hover{box-shadow:var(--e1)}
+.bar-err{display:none;color:var(--md-error);font-size:13px;padding:8px 14px 4px}
+.bar-err.show{display:block}
+.bar-step{padding:12px 10px 12px;border-top:1px solid var(--md-outline-variant);margin-top:8px}
+.bar-step-h{font-size:13.5px;font-weight:500;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;color:var(--md-on-surface-variant)}
+.bar table.sheet{min-width:0}
+.bar .sheet-tools{margin-top:8px}
+.bar .field{margin-top:12px}
+.bar .submit{margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bar .submit .fine{font-size:12.5px;color:var(--md-on-surface-variant);max-width:52ch}
+.hero .hint-w{margin-top:12px;color:rgba(255,255,255,.82);font-size:13px}
+@media (max-width:600px){.bar .paste{flex-wrap:wrap}.bar .paste>.msym{display:none}.bar .paste input{flex:1 0 100%;padding:0 10px}.btn-go{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -529,7 +548,23 @@ function viewOrder(){
     <div class="eyebrow">외국인 환자 병원 전용</div>
     <h1>국내 유일 후불제<br>리뷰 삭제 서비스</h1>
     <p class="sub">외국인 환자 200만 시대, 악성 리뷰 하나에 외국인 환자 전부 도망갑니다.<br>리뷰 삭제되지 않으면 돈 안 받습니다.</p>
-    <div class="cta"><a class="btn btn-filled" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a></div>
+    <div id="order-form"><form class="bar" id="orderForm" novalidate>
+      <div class="paste"><span class="msym" aria-hidden="true">link</span><input id="f-link" name="link" placeholder="여기에 구글 리뷰 링크 붙여넣기" autocomplete="off" inputmode="url" aria-label="구글 리뷰 링크"><button type="button" class="btn btn-go" data-action="bar-go"><span class="msym">delete_sweep</span>리뷰 삭제하기</button></div>
+      <div class="bar-err" id="barErr"></div>
+      <div class="bar-step hidden" id="barStep">
+        <div class="bar-step-h"><span>삭제할 리뷰</span><span id="sheetSum"></span></div>
+        <div class="sheet-wrap"><table class="sheet" id="reviewSheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">리뷰 링크</th><th scope="col"></th></tr></thead><tbody id="sheetBody"></tbody></table></div>
+        <div class="sheet-err" id="sheetErr"></div>
+        <div class="sheet-tools"><button type="button" class="btn btn-outlined btn-sm" data-action="add-row"><span class="msym s18">add</span>링크 추가</button><button type="button" class="btn btn-outlined btn-sm" data-action="toggle-bulk">여러 링크 한 번에 붙여넣기</button></div>
+        <div class="bulk hidden" id="bulkBox"><textarea id="bulkText" placeholder="링크를 한 줄에 하나씩"></textarea><div class="row"><button type="button" class="btn btn-tonal btn-sm" data-action="bulk-add">표에 추가</button></div></div>
+        <div class="row2">
+          <div class="field"><div class="md-field"><input id="f-cname" name="cname" required placeholder=" "><label for="f-cname">담당자<span class="req">*</span></label></div><div class="err">담당자 성함을 입력해 주세요.</div></div>
+          <div class="field"><div class="md-field"><input id="f-phone" name="phone" inputmode="tel" required placeholder=" "><label for="f-phone">휴대폰<span class="req">*</span></label></div><div class="err">휴대폰 번호를 확인해 주세요.</div></div>
+        </div>
+        <div class="submit"><button type="submit" class="btn btn-filled"><span class="msym">send</span>접수하기</button><span class="fine">접수하면 지워진 건만 건당 250,000원(VAT 별도)이 청구되는 데 동의한 것입니다. 못 지운 건은 0원.</span></div>
+      </div>
+    </form></div>
+    <p class="hint-w">구글 지도에서 리뷰 옆 더보기 → '리뷰 공유'를 누르면 링크가 복사됩니다. 여러 개면 한 번에 붙여넣어도 됩니다.</p>
   </div>
   <figure class="phone-mock"><img src="${IMG_SHOT}" width="780" height="1966" alt="외국인 환자가 남긴 별 1개 구글 리뷰 예시 화면"><figcaption>예시 화면. 별 1개 리뷰는 이렇게 첫 화면에 뜹니다.</figcaption></figure>
 </div></section>
@@ -565,7 +600,7 @@ function viewOrder(){
   <div class="eyebrow">진행</div><h2>혼자 싸우지 마세요.</h2>
   <p class="lead">접수부터 청구까지 네 단계로 진행합니다.</p>
   <div class="steps">
-    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 표에 붙여넣으세요. 여러 건도 한 번에 접수할 수 있습니다.</p><span class="w">1분</span></div>
+    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 붙여넣고 담당자와 휴대폰만 적으세요. 여러 건도 한 번에 접수할 수 있습니다.</p><span class="w">1분</span></div>
     <div class="step"><div class="ic"><span class="msym">mark_email_read</span></div><div class="n">02</div><h4>회신</h4><p>삭제 가능 여부를 24시간 안에 알려드립니다.</p><span class="w">24시간</span></div>
     <div class="step"><div class="ic"><span class="msym">delete_sweep</span></div><div class="n">03</div><h4>삭제</h4><p>사진이 있거나 오래된 리뷰도 진행합니다.</p><span class="w">평균 2주</span></div>
     <div class="step"><div class="ic"><span class="msym">receipt_long</span></div><div class="n">04</div><h4>청구</h4><p>삭제를 확인한 건만 청구서를 보내드립니다.</p><span class="w">당일</span></div>
@@ -591,32 +626,8 @@ function viewOrder(){
   <details><summary>지운 리뷰가 다시 올라오면요?</summary><p>삭제 후 14일간 확인합니다. 다시 올라오면 무상으로 지워드립니다.</p></details>
 </div></section>
 
-<section class="section" id="order-form" style="background:var(--bg-2)"><div class="wrap">
-  <form class="form" id="orderForm" novalidate>
-    <div class="eyebrow">접수</div><h3>어떤 리뷰를 지워드릴까요?</h3><p class="muted small">접수가 끝나면 접수번호를 바로 드립니다. 결제 정보는 받지 않습니다.</p>
-    <div class="row2">
-      <div class="field"><div class="md-field"><input id="f-business" name="business" required placeholder=" "><label for="f-business">병원명<span class="req">*</span></label></div><div class="help">예) OO피부과의원 (강남)</div><div class="err">병원명을 입력해 주세요.</div></div>
-      <div class="field"><div class="md-field"><input id="f-maps" name="mapsUrl" placeholder=" "><label for="f-maps">구글 지도 병원 링크</label></div><div class="help">있으면 확인이 빨라집니다.</div></div>
-    </div>
-    <div class="sec-h" style="margin:22px 0 8px"><h3 style="font-size:15px;font-weight:800">삭제 요청 리뷰</h3><span class="hint">한 줄에 리뷰 1건씩 입력하세요. 엑셀이나 카카오톡에서 복사해 붙여넣을 수 있습니다.</span></div>
-    <div class="sheet-wrap"><table class="sheet" id="reviewSheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:300px">리뷰 링크 <span style="color:var(--pink-ink)">*</span></th><th scope="col" style="min-width:140px">작성자 표시 이름</th><th scope="col" style="min-width:220px">리뷰 첫 문장 (선택)</th><th scope="col" style="width:60px"></th></tr></thead><tbody id="sheetBody"></tbody></table></div>
-    <div class="sheet-err" id="sheetErr"></div>
-    <div class="sheet-tools"><button type="button" class="btn btn-outlined btn-sm" data-action="add-row"><span class="msym s18">add</span>행 추가</button><button type="button" class="btn btn-outlined btn-sm" data-action="toggle-bulk">여러 링크 한 번에 붙여넣기</button><span class="sum" id="sheetSum"></span></div>
-    <div class="bulk hidden" id="bulkBox"><textarea id="bulkText" placeholder="링크를 한 줄에 하나씩. 엑셀에서 복사하면 링크·작성자·첫 문장 열이 그대로 들어갑니다."></textarea><div class="row"><button type="button" class="btn btn-tonal btn-sm" data-action="bulk-add">표에 추가</button></div></div>
-    <div class="row2" style="margin-top:6px">
-      <div class="field"><div class="md-field"><input id="f-cname" name="cname" required placeholder=" "><label for="f-cname">담당자<span class="req">*</span></label></div><div class="help">실장, 코디네이터, 원장</div><div class="err">담당자 성함을 입력해 주세요.</div></div>
-      <div class="field"><div class="md-field"><input id="f-phone" name="phone" inputmode="tel" required placeholder=" "><label for="f-phone">휴대폰<span class="req">*</span></label></div><div class="help">010-0000-0000</div><div class="err">휴대폰 번호를 확인해 주세요.</div></div>
-    </div>
-    <div class="row2">
-      <div class="field"><div class="md-field"><input id="f-email" name="email" type="email" placeholder=" "><label for="f-email">이메일</label></div><div class="help">세금계산서 수신용</div><div class="err">이메일 형식을 확인해 주세요.</div></div>
-      <div class="field"><div class="md-field"><input id="f-kakao" name="kakao" placeholder=" "><label for="f-kakao">카카오톡 ID</label></div></div>
-    </div>
-    <div class="field"><div class="md-field"><textarea id="f-note" name="note" rows="3" placeholder=" "></textarea><label for="f-note">요청사항</label></div><div class="help">내원 이력, 경쟁 병원 추정 근거 등</div></div>
-    <label class="agree"><input type="checkbox" name="agree"><span>지워진 건만 건당 250,000원(VAT 별도)이 청구되고, 못 지운 건은 비용이 없음을 확인합니다.<span class="req">*</span></span></label>
-    <div class="err" id="agreeErr" style="font-size:12.5px;color:var(--bad);display:none;margin-top:6px">청구 조건에 동의해야 접수할 수 있습니다.</div>
-    <div class="submit"><button type="submit" class="btn btn-filled"><span class="msym">send</span>접수하기</button><span class="fine">24시간 안에 가능 여부를 알림톡으로 알려드립니다.</span></div>
-  </form>
-  <div class="card pad" id="status-lookup" style="margin-top:20px;max-width:760px">
+<section class="section" style="background:var(--bg-2);padding-top:40px;padding-bottom:40px"><div class="wrap">
+  <div class="card pad" id="status-lookup" style="max-width:760px">
     <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) ${esc(S.orders[0].id)}</p>
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
@@ -624,37 +635,42 @@ function viewOrder(){
 <footer><div class="wrap"><span>${BRAND} · 외국인 환자 병원 구글 리뷰 삭제 · 후불제</span><span>문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
 <a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>`;
 }
-function sheetRowHtml(n,v){v=v||{};return `<tr><td class="n">${n}</td><td><input class="link" name="url" aria-label="리뷰 링크" placeholder="https://maps.app.goo.gl/…" value="${esc(v.url||'')}" autocomplete="off"></td><td><input name="author" aria-label="작성자 표시 이름" placeholder="예) Anna P." value="${esc(v.author||'')}" autocomplete="off"></td><td><input name="snippet" aria-label="리뷰 첫 문장" placeholder="선택" value="${esc(v.snippet||'')}" autocomplete="off"></td><td><button type="button" class="rm" data-action="rm-row">삭제</button></td></tr>`}
-function renumber(){const rows=[...document.querySelectorAll('#sheetBody tr')];rows.forEach((tr,i)=>{tr.querySelector('td.n').textContent=i+1});const s=document.getElementById('sheetSum');if(s)s.textContent=rows.length+'행 · 건당 250,000원 · 지워진 건만 청구'}
-function mountOrderForm(){const tb=document.getElementById('sheetBody');if(!tb)return;tb.innerHTML=sheetRowHtml(1)+sheetRowHtml(2)+sheetRowHtml(3);renumber()}
+function sheetRowHtml(n,v){v=v||{};return `<tr><td class="n">${n}</td><td><input class="link" name="url" aria-label="리뷰 링크" placeholder="https://maps.app.goo.gl/…" value="${esc(v.url||'')}" autocomplete="off"></td><td><button type="button" class="rm" data-action="rm-row">삭제</button></td></tr>`}
+function renumber(){const rows=[...document.querySelectorAll('#sheetBody tr')];rows.forEach((tr,i)=>{tr.querySelector('td.n').textContent=i+1});const s=document.getElementById('sheetSum');if(s)s.textContent=rows.length+'건 · 건당 250,000원 · 지워진 건만 청구'}
+function mountOrderForm(){const tb=document.getElementById('sheetBody');if(!tb)return;tb.innerHTML=sheetRowHtml(1);renumber()}
 function rowIsEmpty(tr){return [...tr.querySelectorAll('input')].every(i=>!i.value.trim())}
-function parseLines(text){return text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const c=l.split('\t').map(x=>x.trim());return {url:c[0]||'',author:c[1]||'',snippet:c[2]||''}}).filter(v=>v.url)}
-function addRows(list){const tb=document.getElementById('sheetBody');if(!tb)return;list=list||[{}];const empties=[...tb.querySelectorAll('tr')].filter(rowIsEmpty);list.forEach(v=>{const tr=empties.shift();if(tr&&(v.url||v.author||v.snippet)){tr.querySelector('[name=url]').value=v.url||'';tr.querySelector('[name=author]').value=v.author||'';tr.querySelector('[name=snippet]').value=v.snippet||''}else tb.insertAdjacentHTML('beforeend',sheetRowHtml(0,v))});renumber()}
+function parseLines(text){return text.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const c=l.split(/\t|\s{2,}/).map(x=>x.trim());return {url:c[0]||''}}).filter(v=>v.url)}
+function addRows(list){const tb=document.getElementById('sheetBody');if(!tb)return;list=list||[{}];const empties=[...tb.querySelectorAll('tr')].filter(rowIsEmpty);list.forEach(v=>{const tr=empties.shift();if(tr&&v.url)tr.querySelector('[name=url]').value=v.url;else if(tr&&!v.url)return;else tb.insertAdjacentHTML('beforeend',sheetRowHtml(0,v))});renumber()}
+function barGo(){const inp=document.getElementById('f-link');const err=document.getElementById('barErr');if(!inp||!err)return false;const v=(inp.value||'').trim();err.classList.remove('show');
+  if(!v){err.textContent='구글 지도에서 복사한 리뷰 링크를 붙여넣어 주세요.';err.classList.add('show');inp.focus();return false}
+  const parts=v.split(/\s+/).filter(Boolean);if(parts.some(x=>!isReviewUrl(x))){err.textContent="구글 지도 리뷰 링크가 아닙니다 (maps.app.goo.gl, google.com/maps 등). 리뷰 옆 더보기 → '리뷰 공유'로 복사한 링크를 넣어 주세요.";err.classList.add('show');inp.focus();return false}
+  document.getElementById('barStep').classList.remove('hidden');addRows(parts.map(u=>({url:normUrl(u)})));inp.value='';
+  const c=document.getElementById('f-cname');if(c&&!c.value)c.focus();toast(parts.length+'건 추가 · 담당자와 휴대폰만 적으면 접수됩니다');return true}
 function submitOrder(form){
   let ok=true;const f=form.elements;
+  const step=document.getElementById('barStep');
+  const pend=(f.link.value||'').trim();if(pend){if(!barGo())return}
+  if(step.classList.contains('hidden')){barGo();return}
   const need=(el,cond)=>{const fld=el.closest('.field');if(!fld)return;fld.classList.toggle('invalid',!cond);if(!cond)ok=false};
-  need(f.business,f.business.value.trim().length>0);
   need(f.cname,f.cname.value.trim().length>0);
   need(f.phone,/^01[016789]\d{7,8}$/.test(f.phone.value.replace(/[\s-]/g,'')));
-  if(f.email.value.trim())need(f.email,/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.value.trim()));else f.email.closest('.field').classList.remove('invalid');
   const revs=[],bad=[];
-  [...form.querySelectorAll('#sheetBody tr')].forEach((tr,i)=>{const u=tr.querySelector('[name=url]');const td=u.closest('td');td.classList.remove('invalid');if(rowIsEmpty(tr))return;const val=u.value.trim();if(!isReviewUrl(val)){td.classList.add('invalid');bad.push(i+1);return}revs.push({url:normUrl(val),author:tr.querySelector('[name=author]').value.trim(),snippet:tr.querySelector('[name=snippet]').value.trim()})});
+  [...form.querySelectorAll('#sheetBody tr')].forEach((tr,i)=>{const u=tr.querySelector('[name=url]');const td=u.closest('td');td.classList.remove('invalid');if(rowIsEmpty(tr))return;const val=u.value.trim();if(!isReviewUrl(val)){td.classList.add('invalid');bad.push(i+1);return}revs.push({url:normUrl(val)})});
   const se=document.getElementById('sheetErr');
   if(bad.length){se.textContent=bad.join(', ')+'번 행: 구글 지도 리뷰 링크가 아닙니다 (maps.app.goo.gl, google.com/maps 등).';se.classList.add('show');ok=false}
-  else if(!revs.length){se.textContent='리뷰 링크를 1건 이상 입력해 주세요.';se.classList.add('show');ok=false}
+  else if(!revs.length){se.textContent='리뷰 링크를 1건 이상 붙여넣어 주세요.';se.classList.add('show');ok=false}
   else se.classList.remove('show');
-  const agreeErr=document.getElementById('agreeErr');agreeErr.style.display=f.agree.checked?'none':'block';if(!f.agree.checked)ok=false;
-  if(!ok){const first=form.querySelector('.invalid, .sheet-err.show, #agreeErr[style*="block"]');if(first)first.scrollIntoView({block:'center'});return}
-  const id=newOrderId();const when=iso(new Date());
-  S.orders.push({id,business:f.business.value.trim(),mapsUrl:normUrl(f.mapsUrl.value),contact:{name:f.cname.value.trim(),phone:f.phone.value.trim(),email:f.email.value.trim(),kakao:f.kakao.value.trim()},createdAt:when,note:f.note.value.trim()});
-  revs.forEach((r,i)=>{const it={id:id+'-'+(i+1),orderId:id,url:r.url,author:r.author,snippet:r.snippet,status:'requested',workerId:null,createdAt:when,checks:[],events:[],payout:{status:'none'},billing:{status:'none'},returns:0,demo:{gone:true}};ev(it,'requested','접수',when);S.items.push(it)});
+  if(!ok){const first=form.querySelector('.invalid, .sheet-err.show');if(first)first.scrollIntoView({block:'center'});return}
+  const id=newOrderId();const when=iso(new Date());const name=f.cname.value.trim();
+  S.orders.push({id,business:name,mapsUrl:'',contact:{name,phone:f.phone.value.trim(),email:'',kakao:''},createdAt:when,note:''});
+  revs.forEach((r,i)=>{const it={id:id+'-'+(i+1),orderId:id,url:r.url,author:'',snippet:'',status:'requested',workerId:null,createdAt:when,checks:[],events:[],payout:{status:'none'},billing:{status:'none'},returns:0,demo:{gone:true}};ev(it,'requested','접수',when);S.items.push(it)});
   save();location.hash='#/order/done/'+id;
 }
 
 /* ---------- view: done ---------- */
 function viewDone(id){const o=S.orders.find(x=>x.id===id);if(!o)return viewNotFound();const its=itemsOf(o);
   return topbar('구글 리뷰 삭제')+`<div class="done">
-  <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${esc(o.business)} 리뷰 ${its.length}건을 접수했습니다.</h2>
+  <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${esc(o.contact.name)} 담당자님, 리뷰 ${its.length}건을 접수했습니다.</h2>
   <div class="idbox"><div class="small muted">접수번호</div><div class="id">${esc(o.id)}</div><div class="small muted" style="margin-top:8px">조회 링크</div><div class="linkbox"><input readonly value="${esc(statusUrl(o.id))}" id="statusLink"><button class="btn btn-outlined btn-sm" type="button" data-action="copy" data-target="statusLink">복사</button></div></div>
   <ul class="timeline">
     <li><span class="t">지금</span><span>접수 확인 알림톡 발송</span></li>
@@ -748,7 +764,7 @@ function viewSettle(){
   /* 할당 */
   const aOrders=S.orders.filter(o=>toAssign.some(i=>i.orderId===o.id)).sort((a,b)=>a.createdAt<b.createdAt?-1:1);
   const aRows=aOrders.length?aOrders.map(o=>{const its=toAssign.filter(i=>i.orderId===o.id);const unas=its.filter(i=>i.status==='requested').length;
-    const head=`<tr class="grp"><td colspan="6"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span><b>${esc(o.business)}</b> <span class="mono muted small">${esc(o.id)}</span> · ${esc(o.contact.name)} ${esc(o.contact.phone)} · 접수 ${fmt(o.createdAt)}${o.note?` · <span class="muted">${esc(o.note)}</span>`:''}</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="mini">이 접수 ${its.length}건 전체</span>${workerSelect('o:'+o.id)}<button class="btn btn-tonal btn-sm" data-action="assign-order" data-oid="${esc(o.id)}">전체 할당</button></span></div></td></tr>`;
+    const head=`<tr class="grp"><td colspan="6"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span><b>${esc(o.business)}</b> <span class="mono muted small">${esc(o.id)}</span> · ${o.contact.name!==o.business?esc(o.contact.name)+' ':''}${esc(o.contact.phone)} · 접수 ${fmt(o.createdAt)}${o.note?` · <span class="muted">${esc(o.note)}</span>`:''}</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="mini">이 접수 ${its.length}건 전체</span>${workerSelect('o:'+o.id)}<button class="btn btn-tonal btn-sm" data-action="assign-order" data-oid="${esc(o.id)}">전체 할당</button></span></div></td></tr>`;
     const body=its.map(it=>`<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}${o.mapsUrl?`<div class="sub"><a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener">병원 프로필</a></div>`:''}</td><td class="c">${esc(it.author)||'<span class="muted">—</span>'}${it.snippet?`<div class="sub">“${esc(it.snippet)}”</div>`:''}</td><td class="c num">${fmt(it.createdAt)}</td><td class="c">${it.status==='assigned'?`<span class="pill assigned">${esc(workerName(it.workerId))} · 확인 대기</span><div class="sub">${fmt(it.assignedAt)} 할당</div>`:'<span class="pill requested">미할당</span>'}</td><td class="c" style="white-space:nowrap">${workerSelect(it.id,it.workerId)}<button class="btn ${it.status==='assigned'?'btn-outlined':'btn-filled'} btn-sm" data-action="assign" data-id="${esc(it.id)}">${it.status==='assigned'?'재할당':'할당'}</button></td></tr>`).join('');
     return head+body}).join('')
     :`<tr><td colspan="6" class="c"><div class="empty">할당 대기 건이 없습니다. 고객이 접수하면 여기에 쌓입니다.</div></td></tr>`;
@@ -762,7 +778,7 @@ function viewSettle(){
     :`<tr><td colspan="7"><div class="empty">결제 이력이 없습니다.</div></td></tr>`;
   /* 청구 */
   const billRows=S.orders.filter(o=>itemsOf(o).some(i=>i.status==='approved')).map(o=>{const its=itemsOf(o).filter(i=>i.status==='approved');const u=its.filter(i=>i.billing.status==='unbilled').length,v=its.filter(i=>i.billing.status==='invoiced').length,p=its.filter(i=>i.billing.status==='paid').length;
-    return `<tr><td><div style="font-weight:700">${esc(o.business)}</div><div class="sub mono">${esc(o.id)} · ${esc(o.contact.name)} ${esc(o.contact.phone)}</div></td><td class="num">${its.length}건</td><td class="num">${krw(its.length*PRICE)}<div class="sub">VAT 포함 ${krw(its.length*PRICE*(1+VAT))}</div></td><td><span class="chk">청구 예정 ${u}</span><span class="chk">입금 대기 ${v}</span><span class="chk">입금 완료 ${p}</span></td><td style="white-space:nowrap"><button class="btn btn-tonal btn-sm" data-action="invoice" data-oid="${esc(o.id)}" ${u?'':'disabled'}>청구서 발송</button> <button class="btn btn-outlined btn-sm" data-action="paid" data-oid="${esc(o.id)}" ${v?'':'disabled'}>입금 확인</button></td></tr>`}).join('')||`<tr><td colspan="5"><div class="empty">청구 대상이 없습니다.</div></td></tr>`;
+    return `<tr><td><div style="font-weight:700">${esc(o.business)}</div><div class="sub mono">${esc(o.id)} · ${o.contact.name!==o.business?esc(o.contact.name)+' ':''}${esc(o.contact.phone)}</div></td><td class="num">${its.length}건</td><td class="num">${krw(its.length*PRICE)}<div class="sub">VAT 포함 ${krw(its.length*PRICE*(1+VAT))}</div></td><td><span class="chk">청구 예정 ${u}</span><span class="chk">입금 대기 ${v}</span><span class="chk">입금 완료 ${p}</span></td><td style="white-space:nowrap"><button class="btn btn-tonal btn-sm" data-action="invoice" data-oid="${esc(o.id)}" ${u?'':'disabled'}>청구서 발송</button> <button class="btn btn-outlined btn-sm" data-action="paid" data-oid="${esc(o.id)}" ${v?'':'disabled'}>입금 확인</button></td></tr>`}).join('')||`<tr><td colspan="5"><div class="empty">청구 대상이 없습니다.</div></td></tr>`;
   const runRows=S.runs.slice().sort((a,b)=>a.at<b.at?1:-1).map(r=>`<tr><td class="num">${fmtFull(r.at)}</td><td class="num">${r.checked}</td><td class="num" style="color:var(--good)">${r.removed}</td><td class="num" style="color:var(--pink-ink)">${r.visible}</td></tr>`).join('')||`<tr><td colspan="4"><div class="empty">실행 기록 없음</div></td></tr>`;
   /* DB */
   const dbg=dbGroups();const dbTab=UI.dbTab in dbg?UI.dbTab:'all';const dbList=dbg[dbTab].slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1);
@@ -780,7 +796,7 @@ function viewSettle(){
     <div class="sec-h"><h3>1. 할당</h3><span class="hint">고객이 접수한 리뷰를 작업자에게 배정합니다. 접수 단위로 전체 할당하거나 건별로 할당합니다.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">접수</th><th scope="col">현재</th><th scope="col">할당</th></tr></thead><tbody>${aRows}</tbody></table></div>
     <div class="sec-h"><h3>2. 승인</h3><span class="hint">작업자가 삭제 완료를 보고한 건. 링크를 직접 확인하고 승인하면 결제 예정으로 넘어갑니다. 자동 확인 결과는 참고용입니다.</span></div>
-    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호 · 병원 · 작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">완료 보고</th><th scope="col">자동 확인</th><th scope="col">처리</th></tr></thead><tbody>${qRows}</tbody></table></div>
+    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호 · 고객 · 작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">완료 보고</th><th scope="col">자동 확인</th><th scope="col">처리</th></tr></thead><tbody>${qRows}</tbody></table></div>
     <div class="sec-h"><h3>3. 결제</h3><span class="hint">승인 건 × ${usd(FEE_USD)}. 파이버로 송금한 뒤 결제 완료를 누르면 배치 번호와 함께 이력에 남습니다.</span></div>
     <div class="table-wrap"><table><thead><tr><th scope="col">작업자</th><th scope="col">결제 예정</th><th scope="col">금액</th><th scope="col">결제 완료 누적</th><th scope="col">처리</th></tr></thead><tbody>${wPayRows}</tbody></table></div>
     <div class="sec-h" style="margin-top:14px"><h3>결제 이력</h3><span class="hint">송금 기록. 배치 번호 · 건수 · 금액 · 메모 · 처리자</span></div>
@@ -789,7 +805,7 @@ function viewSettle(){
     <div class="table-wrap"><table><thead><tr><th scope="col">고객</th><th scope="col">삭제 완료</th><th scope="col">청구액</th><th scope="col">상태</th><th scope="col">처리</th></tr></thead><tbody>${billRows}</tbody></table></div>
     <div class="sec-h"><h3>리뷰 링크 DB</h3><span class="hint">접수된 리뷰 전체. 복사 버튼은 현재 탭의 행을 엑셀용으로 복사합니다.</span><span style="margin-left:auto"><button class="btn btn-outlined btn-sm" data-action="copy-tsv"><span class="msym s18">content_copy</span>엑셀용 복사 (TSV)</button></span></div>
     <div class="tabs" style="margin-top:6px">${dbTabBtn('all','전체')}${dbTabBtn('requested','접수')}${dbTabBtn('progress','진행 중')}${dbTabBtn('done_claimed','승인 대기')}${dbTabBtn('pending','결제 예정')}${dbTabBtn('paid','결제 완료')}${dbTabBtn('rejected','삭제 불가')}</div>
-    <div class="sheet-wrap"><table class="sheet" style="min-width:1200px"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호</th><th scope="col">병원</th><th scope="col">작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자</th><th scope="col" style="min-width:180px">내용</th><th scope="col">상태</th><th scope="col">접수</th><th scope="col">승인</th><th scope="col">작업자 결제</th><th scope="col">고객 청구</th></tr></thead><tbody>${dbRows}</tbody></table></div>
+    <div class="sheet-wrap"><table class="sheet" style="min-width:1200px"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호</th><th scope="col">고객</th><th scope="col">작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자</th><th scope="col" style="min-width:180px">내용</th><th scope="col">상태</th><th scope="col">접수</th><th scope="col">승인</th><th scope="col">작업자 결제</th><th scope="col">고객 청구</th></tr></thead><tbody>${dbRows}</tbody></table></div>
     <div class="sec-h"><h3>작업자 계정</h3><span class="hint">계정을 만들어 로그인 ID·비밀번호 또는 개인 링크를 전달합니다. 작업자가 처리한 건은 그 계정으로 기록됩니다.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col">작업자 · 로그인 ID</th><th scope="col">비밀번호</th><th scope="col" style="min-width:280px">개인 링크</th><th scope="col" class="num">진행 중</th><th scope="col" class="num">이달 승인</th><th scope="col" class="num">결제 예정</th><th scope="col"></th></tr></thead><tbody>${wRows}</tbody></table></div>
     <form id="workerAdd" class="sheet-tools" style="margin-top:14px;align-items:flex-start"><div class="md-field" style="min-width:220px"><input id="wa-name" name="wname" placeholder=" "><label for="wa-name">표시 이름 (예: partner03)</label></div><div class="md-field" style="min-width:180px"><input id="wa-login" name="wlogin" placeholder=" "><label for="wa-login">로그인 ID</label></div><button class="btn btn-tonal" type="submit" style="height:56px"><span class="msym">person_add</span>계정 만들기</button></form>
@@ -802,7 +818,7 @@ function viewSettle(){
     <div class="card pad"><div class="eyebrow">자동 확인 방식</div><p class="small" style="margin-top:8px;color:var(--ink-2)">매일 09:00 cron이 병원별 구글 리뷰 목록을 조회(DataForSEO)해 접수 시 저장한 작성자명·본문 앞부분과 대조합니다. 결과는 승인 대기 표에 "삭제 확인됨 / 지도에 표시 중"으로만 표시되고, 승인은 마스터가 직접 합니다.<br><br>이 프로토타입의 실행 버튼은 1회 조회 시뮬레이션입니다.</p></div>
   </aside></div></div>`;
 }
-function copyTsv(){const g=dbGroups();const list=(g[UI.dbTab]||g.all).slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1);const H=['접수번호','병원','작업자','리뷰 링크','작성자','내용','상태','접수','승인','작업자 결제','고객 청구'];const lines=[H.join('\t')];list.forEach(it=>{const o=orderOf(it);lines.push([it.orderId,o?o.business:'',workerName(it.workerId),it.url,it.author,it.snippet,KO[it.status],fmtFull(it.createdAt),it.approvedAt?fmtFull(it.approvedAt):'',it.status!=='approved'?'':(it.payout.status==='paid'?'결제 완료 '+it.payout.batch:'결제 예정'),it.status!=='approved'?'':BILL_KO[it.billing.status]].map(tsvCell).join('\t'))});const text=lines.join('\n');const done=()=>toast('엑셀에 붙여넣을 수 있게 복사했습니다 · '+(lines.length-1)+'행');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,()=>fallbackCopy(text,done));else fallbackCopy(text,done)}
+function copyTsv(){const g=dbGroups();const list=(g[UI.dbTab]||g.all).slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1);const H=['접수번호','고객','작업자','리뷰 링크','작성자','내용','상태','접수','승인','작업자 결제','고객 청구'];const lines=[H.join('\t')];list.forEach(it=>{const o=orderOf(it);lines.push([it.orderId,o?o.business:'',workerName(it.workerId),it.url,it.author,it.snippet,KO[it.status],fmtFull(it.createdAt),it.approvedAt?fmtFull(it.approvedAt):'',it.status!=='approved'?'':(it.payout.status==='paid'?'결제 완료 '+it.payout.batch:'결제 예정'),it.status!=='approved'?'':BILL_KO[it.billing.status]].map(tsvCell).join('\t'))});const text=lines.join('\n');const done=()=>toast('엑셀에 붙여넣을 수 있게 복사했습니다 · '+(lines.length-1)+'행');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,()=>fallbackCopy(text,done));else fallbackCopy(text,done)}
 function fallbackCopy(text,done){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){toast('복사에 실패했습니다')}document.body.removeChild(ta)}
 
 /* ---------- router & events ---------- */
@@ -828,6 +844,7 @@ document.addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,id=b.dataset.id;
   const selVal=key=>{const s=document.querySelector('select[data-assign="'+key+'"]');return s?s.value:null};
   if(a==='reset')reset();
+  else if(a==='bar-go')barGo();
   else if(a==='ack')ack(id);else if(a==='claim')claim(id);else if(a==='reject')reject(id);
   else if(a==='assign')assign(id,selVal(id));else if(a==='assign-order')assignOrder(b.dataset.oid,selVal('o:'+b.dataset.oid));
   else if(a==='approve')approve(id);else if(a==='return')returnItem(id);else if(a==='pay-worker')markPaidWorker(id);else if(a==='check-auto')checkAuto();
@@ -845,7 +862,10 @@ document.addEventListener('click',e=>{
   else if(a==='bulk-add'){const ta=document.getElementById('bulkText');const list=parseLines(ta.value);if(!list.length){toast('붙여넣은 링크가 없습니다');return}addRows(list);ta.value='';document.getElementById('bulkBox').classList.add('hidden');toast(list.length+'행을 표에 추가했습니다')}
   else if(a==='copy'){const inp=document.getElementById(b.dataset.target);inp.select();const done=()=>toast('복사했습니다');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(inp.value).then(done,()=>fallbackCopy(inp.value,done));else fallbackCopy(inp.value,done)}
 });
-document.addEventListener('paste',e=>{const t=e.target;if(!(t&&t.name==='url'&&t.closest('#sheetBody')))return;const text=(e.clipboardData||window.clipboardData).getData('text')||'';if(!/[\r\n\t]/.test(text.trim()))return;e.preventDefault();const list=parseLines(text);if(!list.length)return;const tr=t.closest('tr');const first=list.shift();tr.querySelector('[name=url]').value=first.url;if(first.author)tr.querySelector('[name=author]').value=first.author;if(first.snippet)tr.querySelector('[name=snippet]').value=first.snippet;let anchor=tr;list.forEach(v=>{anchor.insertAdjacentHTML('afterend',sheetRowHtml(0,v));anchor=anchor.nextElementSibling});renumber();toast((list.length+1)+'행을 표에 붙여넣었습니다')});
+document.addEventListener('paste',e=>{const t=e.target;if(!t)return;const text=(e.clipboardData||window.clipboardData).getData('text')||'';
+  if(t.id==='f-link'){if(!/[\r\n\t]/.test(text.trim()))return;e.preventDefault();const list=parseLines(text);if(!list.length)return;t.value=list.map(v=>v.url).join(' ');barGo();return}
+  if(!(t.name==='url'&&t.closest('#sheetBody')))return;if(!/[\r\n\t]/.test(text.trim()))return;e.preventDefault();const list=parseLines(text);if(!list.length)return;const tr=t.closest('tr');const first=list.shift();tr.querySelector('[name=url]').value=first.url;let anchor=tr;list.forEach(v=>{anchor.insertAdjacentHTML('afterend',sheetRowHtml(0,v));anchor=anchor.nextElementSibling});renumber();toast((list.length+1)+'행을 표에 붙여넣었습니다')});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target&&e.target.id==='f-link'){e.preventDefault();barGo()}});
 document.addEventListener('input',e=>{const t=e.target;if(t&&t.name==='url'&&t.closest('#sheetBody')){t.closest('td').classList.remove('invalid');if(!document.querySelector('#sheetBody td.invalid')){const se=document.getElementById('sheetErr');if(se)se.classList.remove('show')}}});
 document.addEventListener('submit',e=>{
   if(e.target.id==='orderForm'){e.preventDefault();submitOrder(e.target)}
