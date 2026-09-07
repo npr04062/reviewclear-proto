@@ -14,7 +14,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:url" content="https://reviewclear.kr/">
 <meta property="og:locale" content="ko_KR">
-<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://reviewclear.kr/#org","name":"리뷰지우개","alternateName":"리뷰지우개 reviewclear.kr","url":"https://reviewclear.kr/","areaServed":"KR","knowsAbout":["구글 리뷰 삭제","구글 지도 리뷰 신고","외국인 환자 병원 평판 관리"],"parentOrganization":{"@type":"Organization","@id":"https://reviewclear.kr/#stradigi","name":"주식회사 스트라디지","description":"외국인 환자 병원 마케팅 대행사"},"founder":{"@id":"https://reviewclear.kr/#author"}},{"@type":"Person","@id":"https://reviewclear.kr/#author","name":"정영훈","jobTitle":"대표","worksFor":{"@id":"https://reviewclear.kr/#stradigi"},"knowsAbout":["구글 지도 마케팅","외국인 환자 유치","구글 리뷰 삭제"]},{"@type":"WebSite","@id":"https://reviewclear.kr/#website","url":"https://reviewclear.kr/","name":"리뷰지우개","inLanguage":"ko","publisher":{"@id":"https://reviewclear.kr/#org"}},{"@type":"Service","@id":"https://reviewclear.kr/#service","name":"구글 리뷰 삭제 (후불제)","serviceType":"구글 지도 리뷰 삭제 대행","areaServed":"KR","audience":{"@type":"Audience","audienceType":"외국인 환자를 진료하는 병의원"},"provider":{"@id":"https://reviewclear.kr/#org"},"offers":{"@type":"Offer","price":"250000","priceCurrency":"KRW","description":"삭제가 확인된 건만 청구, VAT 별도. 못 지우면 0원."}}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"https://reviewclear.kr/#org","name":"리뷰지우개","alternateName":"리뷰지우개 reviewclear.kr","url":"https://reviewclear.kr/","areaServed":"KR","knowsAbout":["구글 리뷰 삭제","구글 지도 리뷰 신고","외국인 환자 병원 평판 관리"],"parentOrganization":{"@type":"Organization","@id":"https://reviewclear.kr/#stradigi","name":"주식회사 스트라디지","description":"외국인 환자 병원 마케팅 대행사","sameAs":["https://pf.kakao.com/_Dxidin"]},"founder":{"@id":"https://reviewclear.kr/#author"},"contactPoint":{"@type":"ContactPoint","contactType":"customer support","url":"https://pf.kakao.com/_Dxidin/chat","availableLanguage":"ko"}},{"@type":"Person","@id":"https://reviewclear.kr/#author","name":"정영훈","jobTitle":"대표","worksFor":{"@id":"https://reviewclear.kr/#stradigi"},"knowsAbout":["구글 지도 마케팅","외국인 환자 유치","구글 리뷰 삭제"]},{"@type":"WebSite","@id":"https://reviewclear.kr/#website","url":"https://reviewclear.kr/","name":"리뷰지우개","inLanguage":"ko","publisher":{"@id":"https://reviewclear.kr/#org"}},{"@type":"Service","@id":"https://reviewclear.kr/#service","name":"구글 리뷰 삭제 (후불제)","serviceType":"구글 지도 리뷰 삭제 대행","areaServed":"KR","audience":{"@type":"Audience","audienceType":"외국인 환자를 진료하는 병의원"},"provider":{"@id":"https://reviewclear.kr/#org"},"offers":{"@type":"Offer","price":"250000","priceCurrency":"KRW","description":"삭제가 확인된 건만 청구, VAT 별도. 못 지우면 0원."}}]}</script>
 <title>구글 리뷰 삭제, 지워진 뒤에만 청구하는 후불제 | 리뷰지우개</title>
 <meta name="naver-site-verification" content="020e2cf6fb46b092b87b8c2371f90cf2313bba36" />
 <!-- rc-track -->
@@ -389,6 +389,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 /* ===== extended FAB (mobile CTA) ===== */
 .sticky-cta{display:none}
 @media (max-width:860px){.sticky-cta{display:inline-flex;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:45;align-items:center;gap:10px;height:56px;padding:0 20px 0 16px;border-radius:var(--sh-lg);background:var(--md-primary-container);color:var(--md-on-primary-container);box-shadow:var(--e3);text-decoration:none;font-weight:500;font-size:14px}.sticky-cta .mini{display:none}footer{padding-bottom:96px}}
+/* ===== KakaoTalk channel FAB ===== */
+.kakao-fab{position:fixed;right:24px;bottom:24px;z-index:46;display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:24px;background:#FEE500;color:#191919;font-weight:600;font-size:14px;line-height:1;text-decoration:none;box-shadow:var(--e3);cursor:pointer;transition:filter .2s}
+.kakao-fab:hover{filter:brightness(.95)}.kakao-fab:focus-visible{outline:3px solid var(--md-primary);outline-offset:2px}
+@media (max-width:860px){.kakao-fab{right:16px;bottom:calc(16px + env(safe-area-inset-bottom));width:48px;padding:0;justify-content:center}.kakao-fab span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}.kakao-fab.stacked{bottom:calc(84px + env(safe-area-inset-bottom))}footer{padding-bottom:150px}}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
 .pill.assigned{background:var(--md-secondary-container);color:var(--md-on-secondary-container)}
 .pill.approved{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)}
@@ -518,12 +522,13 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 
 <section class="section" style="background:var(--bg-2);padding-top:40px;padding-bottom:40px"><div class="wrap">
   <div class="card pad" id="status-lookup" style="max-width:760px">
-    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) RR-260824-001</p>
+    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) RR-260825-001</p>
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
-<footer><div class="wrap"><span>리뷰지우개(reviewclear.kr)는 주식회사 스트라디지(외국인 환자 병원 마케팅 대행)가 운영합니다 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="guide/google-review-removal-services/">해외 업체 실태</a> · <a href="privacy/">개인정보처리방침</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
-<a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a></div>
+<footer><div class="wrap"><span>리뷰지우개(reviewclear.kr)는 주식회사 스트라디지(외국인 환자 병원 마케팅 대행)가 운영합니다 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="guide/google-review-removal-services/">해외 업체 실태</a> · <a href="privacy/">개인정보처리방침</a> · <a href="https://pf.kakao.com/_Dxidin/chat" target="_blank" rel="noopener" onclick="try{window.rcTrack&amp;&amp;rcTrack('kakao_click',{place:'footer'})}catch(e){}">카카오톡 문의</a> · 평일 10:00~18:00</span></div></footer>
+<a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>
+<a class="kakao-fab stacked" href="https://pf.kakao.com/_Dxidin/chat" target="_blank" rel="noopener" aria-label="카카오톡 채널로 문의" onclick="try{window.rcTrack&amp;&amp;rcTrack('kakao_click',{place:'fab'})}catch(e){}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="#191919" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.66 6.72L5.6 21.5a.4.4 0 0 0 .6.44l4.32-2.86c.48.06.97.09 1.48.09 5.52 0 10-3.58 10-8S17.52 3 12 3z"></path></svg><span>카카오톡 문의</span></a></div>
 <div class="toast" id="toast"></div>
 <script>
 (function(){
@@ -760,8 +765,9 @@ function viewOrder(){
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
-<footer><div class="wrap"><span>${BRAND}(reviewclear.kr)는 주식회사 스트라디지(외국인 환자 병원 마케팅 대행)가 운영합니다 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="guide/google-review-removal-services/">해외 업체 실태</a> · <a href="privacy/">개인정보처리방침</a> · 문의 카카오톡 채널 · 평일 10:00~18:00</span></div></footer>
-<a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>`;
+<footer><div class="wrap"><span>${BRAND}(reviewclear.kr)는 주식회사 스트라디지(외국인 환자 병원 마케팅 대행)가 운영합니다 · 후불제</span><span><a href="guide/google-review-delete/">삭제 방법 가이드</a> · <a href="guide/google-review-defamation/">명예훼손 대응</a> · <a href="guide/google-review-removal-services/">해외 업체 실태</a> · <a href="privacy/">개인정보처리방침</a> · <a href="https://pf.kakao.com/_Dxidin/chat" target="_blank" rel="noopener" onclick="try{window.rcTrack&&rcTrack('kakao_click',{place:'footer'})}catch(e){}">카카오톡 문의</a> · 평일 10:00~18:00</span></div></footer>
+<a class="sticky-cta" href="#order-form"><span class="msym">delete_sweep</span>리뷰 삭제하기</a>
+<a class="kakao-fab stacked" href="https://pf.kakao.com/_Dxidin/chat" target="_blank" rel="noopener" aria-label="카카오톡 채널로 문의" onclick="try{window.rcTrack&&rcTrack('kakao_click',{place:'fab'})}catch(e){}"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="#191919" d="M12 3C6.48 3 2 6.58 2 11c0 2.83 1.86 5.31 4.66 6.72L5.6 21.5a.4.4 0 0 0 .6.44l4.32-2.86c.48.06.97.09 1.48.09 5.52 0 10-3.58 10-8S17.52 3 12 3z"/></svg><span>카카오톡 문의</span></a>`;
 }
 function sheetRowHtml(n,v){v=v||{};return `<tr><td class="n">${n}</td><td><input class="link" name="url" aria-label="리뷰 링크" placeholder="https://maps.app.goo.gl/…" value="${esc(v.url||'')}" autocomplete="off"></td><td><button type="button" class="rm" data-action="rm-row">삭제</button></td></tr>`}
 function renumber(){const rows=[...document.querySelectorAll('#sheetBody tr')];rows.forEach((tr,i)=>{tr.querySelector('td.n').textContent=i+1});const s=document.getElementById('sheetSum');if(s)s.textContent=rows.length+'건 · 건당 250,000원 · 지워진 건만 청구'}
