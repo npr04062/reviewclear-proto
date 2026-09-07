@@ -598,7 +598,7 @@ function seed(){
   { const it=mk({id:o4+'-1',orderId:o4,url:'https://maps.app.goo.gl/sample-review-8',author:'Traveler_92',snippet:'Acupuncture left bruises and nobody explained anything.',createdAt:c4});ev(it,'requested','접수',c4);s.items.push(it)}
   { const it=mk({id:o4+'-2',orderId:o4,url:'https://www.google.com/maps/reviews/sample-review-9',author:'',snippet:'',createdAt:c4});ev(it,'requested','접수',c4);s.items.push(it)}
   s.seqDay[yymmdd(c4)]=1;
-  s.payments=[{id:PAY1,at:ln(2,2),workerId:'w1',itemIds:[o1+'-1'],count:1,amountUsd:FEE_USD,fx:1380,by:MASTER,memo:'Fiverr 주문 FO-1029'}];
+  s.payments=[{id:PAY1,at:ln(2,2),workerId:'w1',itemIds:[o1+'-1'],count:1,amountUsd:FEE_USD,fx:1380,by:MASTER,memo:'9월 1차 송금'}];
   s.runs=[
     {at:ln(0),mode:'auto',checked:2,removed:0,visible:2},
     {at:ln(1),mode:'auto',checked:1,removed:0,visible:1},
@@ -860,7 +860,7 @@ function viewWorker(){
     <div class="tabs">${tabBtn('new','New')}${tabBtn('progress','In progress')}${tabBtn('reported','Reported')}${tabBtn('approved','Approved')}${tabBtn('all','All mine')}</div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col">Item</th><th scope="col" style="min-width:260px">Review</th><th scope="col">Assigned (KST)</th><th scope="col">Status</th><th scope="col">Action</th></tr></thead><tbody>${rows}</tbody></table></div>
   </div><aside class="side">
-    <div class="card pad"><div class="eyebrow">Payout · ${esc(w.name)}</div><div class="money" style="margin-top:8px"><div class="row"><span>Approved, unpaid</span><b>${usd(pendUsd)}</b></div><div class="row"><span>Paid to date</span><b>${usd(paidUsd)}</b></div><div class="row"><span>Rate</span><b>${usd(FEE_USD)} / removal</b></div></div><p class="small muted" style="margin-top:10px">The admin pays approved removals through the Fiverr order and records each payment here. All times shown are KST.</p></div>
+    <div class="card pad"><div class="eyebrow">Payout · ${esc(w.name)}</div><div class="money" style="margin-top:8px"><div class="row"><span>Approved, unpaid</span><b>${usd(pendUsd)}</b></div><div class="row"><span>Paid to date</span><b>${usd(paidUsd)}</b></div><div class="row"><span>Rate</span><b>${usd(FEE_USD)} / removal</b></div></div><p class="small muted" style="margin-top:10px">The admin pays approved removals and records each payment here. All times shown are KST.</p></div>
     <div class="card pad"><div class="eyebrow">How to work the queue</div><ol style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2);display:grid;gap:6px"><li>Open the review link and confirm eligibility. Use "Can't remove" with a reason if it is not eligible.</li><li>Click "Acknowledge" to confirm you took the item. It moves to In progress.</li><li>When the review is gone on Google Maps, click "Mark removed". The admin checks and approves it.</li><li>If the admin returns the item, the reason is shown on the row. Redo and report again.</li></ol></div>
   </aside></div></div>`;
 }
