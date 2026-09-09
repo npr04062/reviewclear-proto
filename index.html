@@ -425,16 +425,6 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 </head>
 <body>
 <a class="skip" href="#app">본문으로 건너뛰기</a>
-<div id="protobar" hidden>
-  <span class="tag">PROTOTYPE</span>
-  <span>세 화면은 실제 서비스에서 별도 URL과 계정으로 분리됩니다.</span>
-  <nav>
-    <a href="#/order" data-nav="order">① 고객 주문 페이지</a>
-    <a href="#/worker" data-nav="worker">② 작업자 대시보드</a>
-    <a href="#/settle" data-nav="settle">③ 마스터 관리자</a>
-    <button type="button" data-action="reset">데모 데이터 초기화</button>
-  </nav>
-</div>
 <div id="app"><div class="topbar"><a class="wordmark" href="#/order"><span class="msym pin">location_on</span>리뷰지우개</a><span class="sep"></span><span class="pagename">구글 리뷰 삭제</span><div class="right"><a href="#/order" class="muted" style="text-decoration:none">서비스 안내</a><a class="btn btn-filled btn-sm" href="#order-form">리뷰 삭제하기</a></div></div>
 <section class="hero"><div class="wrap">
   <div>
@@ -522,7 +512,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 
 <section class="section" style="background:var(--bg-2);padding-top:40px;padding-bottom:40px"><div class="wrap">
   <div class="card pad" id="status-lookup" style="max-width:760px">
-    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) RR-260825-001</p>
+    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) RR-260909-001</p>
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
@@ -533,7 +523,6 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 <script>
 (function(){
 'use strict';
-const KEY='rr_proto_v5';
 const PRICE=250000, VAT=0.1, FEE_USD=15;
 const BRAND='리뷰지우개';
 const ATTRIB=(window.rcAttrib&&window.rcAttrib())||{};
@@ -555,8 +544,8 @@ function fmtFull(s){if(!s)return '';const k=kst(s);return k.y+'-'+k.m+'-'+k.d+' 
 const krw=n=>'₩'+Math.round(n).toLocaleString('ko-KR');
 const usd=n=>'$'+Number(n).toLocaleString('en-US');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KO={requested:'접수 · 할당 대기',assigned:'할당됨 · 확인 대기',accepted:'작업 중',done_claimed:'승인 대기',approved:'삭제 완료',rejected:'삭제 불가'};
-const KO_C={requested:'접수',assigned:'작업 중',accepted:'작업 중',done_claimed:'삭제 확인 중',approved:'삭제 완료',rejected:'삭제 불가'};
+const KO={requested:'접수 · 할당 대기',assigned:'할당됨 · 확인 대기',accepted:'작업 중',done_claimed:'승인 대기',approved:'삭제 완료',rejected:'삭제 실패'};
+const KO_C={requested:'접수',assigned:'작업 중',accepted:'작업 중',done_claimed:'삭제 확인 중',approved:'삭제 완료',rejected:'삭제 실패'};
 const EN={requested:'Unassigned',assigned:'New · assigned to you',accepted:'In progress',done_claimed:'Reported · awaiting approval',approved:'Approved',rejected:'Not removable'};
 const BILL_KO={unbilled:'청구 예정',invoiced:'청구됨 · 입금 대기',paid:'입금 완료'};
 const PAY_KO={pending:'결제 예정',paid:'결제 완료'};
@@ -565,54 +554,21 @@ const lastNine=()=>{const now=new Date();const k=kst(now);const d=kstDate(k.y,k.
 const nextNine=()=>{const d=lastNine();d.setUTCDate(d.getUTCDate()+1);return d};
 const rnd=n=>{let s='';const a='abcdefghjkmnpqrstuvwxyz23456789';for(let i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s};
 
-/* ---------- store ---------- */
-let S=null;
+/* ---------- store: 서버 상태 (접수 브리지 API, bridge/API-SPEC.md) ---------- */
+const API=ORDER_ENDPOINT;
+let S={orders:[],items:[],workers:[],payments:[],settings:{fx:1380}};
+let ROLE=null,ME=null,LOAD_ERR='';
 const UI={workerTab:'new',dbTab:'all'};
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-function load(){try{const r=localStorage.getItem(KEY);if(!r)return null;const s=JSON.parse(r);return s&&s.v===5?s:null}catch(e){return null}}
-function ev(it,type,text,when,internal){it.events.push({at:when||iso(new Date()),type,text,internal:!!internal})}
-function seed(){
-  const s={v:5,orders:[],items:[],runs:[],payments:[],workers:[],settings:{fx:1380,fxUpdatedAt:null,fxSource:'default',adminPw:'admin1234',adminName:MASTER},seqDay:{}};
-  s.workers.push({id:'w1',name:'partner01',login:'partner01',pw:'demo1234',token:'tk-partner01-7f3a',createdAt:at(30,10,0)});
-  s.workers.push({id:'w2',name:'partner02',login:'partner02',pw:'demo5678',token:'tk-partner02-9c1d',createdAt:at(10,10,0)});
-  const mk=(o)=>Object.assign({status:'requested',author:'',snippet:'',workerId:null,checks:[],events:[],payout:{status:'none'},billing:{status:'none'},returns:0,demo:{gone:true}},o);
-  const LN=lastNine().getTime();const H=3600000,D=24*H;const ln=(n,h)=>iso(new Date(LN-n*D+(h||0)*H));const clampNow=t=>Math.min(t,Date.now()-5*60000);const claimB=iso(new Date(clampNow(LN+70*60000)));
-  const PAY1='PAY-'+yymmdd(ln(2,2))+'-1';
-  const c1=at(14,10,20), o1='RR-'+yymmdd(c1)+'-001';
-  s.orders.push({id:o1,business:'샘플 피부과의원 (강남)',mapsUrl:'https://maps.app.goo.gl/sample-clinic',contact:{name:'김실장',phone:'010-1234-5678',email:'',kakao:'sample_clinic'},createdAt:c1,note:'외국인 환자 리뷰 2건. 둘 다 내원 이력 없는 계정입니다.'});
-  { const it=mk({id:o1+'-1',orderId:o1,url:'https://maps.app.goo.gl/sample-review-1',author:'Anna P.',snippet:'Worst hygiene I have ever seen, staff rude…',status:'approved',workerId:'w1',createdAt:c1,assignedAt:at(14,11,0),acceptedAt:at(13,9,10),claimedAt:ln(3,-14),approvedAt:ln(3,1),checks:[{at:ln(3),result:'removed',mode:'auto'}],payout:{status:'paid',paidAt:ln(2,2),batch:PAY1,by:MASTER},billing:{status:'paid',invoicedAt:ln(3,1.5),paidAt:ln(1,6)}});
-    ev(it,'requested','접수',c1);ev(it,'internal',MASTER+' → partner01 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner01 발주 확인',it.acceptedAt,true);ev(it,'claimed','삭제 보고 · 확인 중',it.claimedAt);ev(it,'internal','자동 확인: 삭제 확인됨',ln(3),true);ev(it,'verified','삭제 완료 확인',it.approvedAt);ev(it,'internal',MASTER+' 승인 · 결제 예정 등록 · 고객 청구 대상',it.approvedAt,true);ev(it,'invoiced','청구서 발송 (₩275,000 · VAT 포함)',it.billing.invoicedAt);ev(it,'payout','결제 완료 · '+PAY1+' · $15 · '+MASTER,it.payout.paidAt,true);ev(it,'paid','입금 확인',it.billing.paidAt);s.items.push(it)}
-  { const it=mk({id:o1+'-2',orderId:o1,url:'https://maps.app.goo.gl/sample-review-2',author:'Tom W.',snippet:'They charged me twice and refused refund. Scam.',status:'done_claimed',workerId:'w1',createdAt:c1,assignedAt:at(14,11,0),acceptedAt:at(13,9,10),claimedAt:claimB});
-    ev(it,'requested','접수',c1);ev(it,'internal',MASTER+' → partner01 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner01 발주 확인',it.acceptedAt,true);ev(it,'claimed','삭제 보고 · 확인 중',it.claimedAt);ev(it,'internal','작업자 partner01 삭제 완료 보고 · '+MASTER+' 승인 대기',it.claimedAt,true);s.items.push(it)}
-  const c2=at(8,14,5), o2='RR-'+yymmdd(c2)+'-001';
-  s.orders.push({id:o2,business:'샘플 성형외과 (신사)',mapsUrl:'https://maps.app.goo.gl/sample-ps',contact:{name:'박실장',phone:'010-2222-3333',email:'coord@example.com',kakao:''},createdAt:c2,note:'해외 계정 3건. 수술 이력 없는 계정 2건 포함.'});
-  { const it=mk({id:o2+'-1',orderId:o2,url:'https://maps.app.goo.gl/sample-review-3',author:'Yuki',snippet:'術後の説明が全くなく、腫れがひどい。二度と行かない。',status:'accepted',workerId:'w1',createdAt:c2,assignedAt:at(8,15,0),acceptedAt:at(7,9,30)});
-    ev(it,'requested','접수',c2);ev(it,'internal',MASTER+' → partner01 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner01 발주 확인',it.acceptedAt,true);s.items.push(it)}
-  { const it=mk({id:o2+'-2',orderId:o2,url:'https://maps.app.goo.gl/sample-review-4',author:'Local Guide · Mark',snippet:'Botched nose job and they refused to fix it. Photos attached.',status:'done_claimed',workerId:'w1',createdAt:c2,assignedAt:at(8,15,0),acceptedAt:at(7,9,30),claimedAt:ln(1,10),checks:[{at:ln(0),result:'visible',mode:'auto'}],demo:{gone:false}});
-    ev(it,'requested','접수',c2);ev(it,'internal',MASTER+' → partner01 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner01 발주 확인',it.acceptedAt,true);ev(it,'claimed','삭제 보고 · 확인 중',it.claimedAt);ev(it,'internal','작업자 partner01 삭제 완료 보고 · '+MASTER+' 승인 대기',it.claimedAt,true);ev(it,'internal','자동 확인: 지도에 표시 중',ln(0),true);s.items.push(it)}
-  { const it=mk({id:o2+'-3',orderId:o2,url:'https://maps.app.goo.gl/sample-review-5',author:'Chen L.',snippet:'医生态度很差，术后没人跟进。',status:'approved',workerId:'w1',createdAt:c2,assignedAt:at(8,15,0),acceptedAt:at(7,9,30),claimedAt:ln(2,-12),approvedAt:ln(2,1),checks:[{at:ln(2),result:'removed',mode:'auto'}],payout:{status:'pending'},billing:{status:'invoiced',invoicedAt:ln(2,1.5)}});
-    ev(it,'requested','접수',c2);ev(it,'internal',MASTER+' → partner01 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner01 발주 확인',it.acceptedAt,true);ev(it,'claimed','삭제 보고 · 확인 중',it.claimedAt);ev(it,'internal','자동 확인: 삭제 확인됨',ln(2),true);ev(it,'verified','삭제 완료 확인',it.approvedAt);ev(it,'internal',MASTER+' 승인 · 결제 예정 등록 · 고객 청구 대상',it.approvedAt,true);ev(it,'invoiced','청구서 발송 (₩275,000 · VAT 포함)',it.billing.invoicedAt);s.items.push(it)}
-  const c3=at(3,11,0), o3='RR-'+yymmdd(c3)+'-001';
-  s.orders.push({id:o3,business:'샘플 치과 (명동)',mapsUrl:'https://maps.app.goo.gl/sample-dental',contact:{name:'이팀장',phone:'010-9876-5432',email:'',kakao:''},createdAt:c3,note:'경쟁 병원 추정 계정 1건, 실제 환자 불만 1건.'});
-  { const it=mk({id:o3+'-1',orderId:o3,url:'https://maps.app.goo.gl/sample-review-6',author:'Дмитрий',snippet:'Имплант выпал через неделю. Не ходите сюда.',status:'accepted',workerId:'w2',createdAt:c3,assignedAt:at(3,12,0),acceptedAt:at(3,15,0),claimedAt:ln(1,10),returns:1,returnNote:'지도에 리뷰가 표시됩니다. 다시 진행해 주세요.',returnedAt:ln(0,1),checks:[{at:ln(0),result:'visible',mode:'auto'}]});
-    ev(it,'requested','접수',c3);ev(it,'internal',MASTER+' → partner02 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner02 발주 확인',it.acceptedAt,true);ev(it,'claimed','삭제 보고 · 확인 중',it.claimedAt);ev(it,'internal','자동 확인: 지도에 표시 중',ln(0),true);ev(it,'not_removed','삭제 진행중 · 다시 작업',it.returnedAt);ev(it,'internal',MASTER+' 반려 · 사유: '+it.returnNote,it.returnedAt,true);s.items.push(it)}
-  { const it=mk({id:o3+'-2',orderId:o3,url:'https://maps.app.goo.gl/sample-review-7',author:'정○○',snippet:'상담 대기만 두 시간. 다시는 안 감.',status:'rejected',workerId:'w2',createdAt:c3,assignedAt:at(3,12,0),acceptedAt:at(3,15,0),rejectedAt:at(2,9,50),rejectedReason:'Genuine customer complaint. Not eligible for removal under Google policy.'});
-    ev(it,'requested','접수',c3);ev(it,'internal',MASTER+' → partner02 할당',it.assignedAt,true);ev(it,'accepted','작업 시작',it.acceptedAt);ev(it,'internal','작업자 partner02 발주 확인',it.acceptedAt,true);ev(it,'rejected','삭제 불가 · 사유: 실제 환자 불만으로 정책상 삭제 대상 아님 · 비용 없음',it.rejectedAt);s.items.push(it)}
-  const c4=at(0,9,40), o4='RR-'+yymmdd(c4)+'-001';
-  s.orders.push({id:o4,business:'샘플 한의원 (홍대)',mapsUrl:'',contact:{name:'최원장',phone:'010-5555-6666',email:'',kakao:'hongdae_hanui'},createdAt:c4,note:''});
-  { const it=mk({id:o4+'-1',orderId:o4,url:'https://maps.app.goo.gl/sample-review-8',author:'Traveler_92',snippet:'Acupuncture left bruises and nobody explained anything.',createdAt:c4});ev(it,'requested','접수',c4);s.items.push(it)}
-  { const it=mk({id:o4+'-2',orderId:o4,url:'https://www.google.com/maps/reviews/sample-review-9',author:'',snippet:'',createdAt:c4});ev(it,'requested','접수',c4);s.items.push(it)}
-  s.seqDay[yymmdd(c4)]=1;
-  s.payments=[{id:PAY1,at:ln(2,2),workerId:'w1',itemIds:[o1+'-1'],count:1,amountUsd:FEE_USD,fx:1380,by:MASTER,memo:'9월 1차 송금'}];
-  s.runs=[
-    {at:ln(0),mode:'auto',checked:2,removed:0,visible:2},
-    {at:ln(1),mode:'auto',checked:1,removed:0,visible:1},
-    {at:ln(2),mode:'auto',checked:1,removed:1,visible:0},
-    {at:ln(3),mode:'auto',checked:1,removed:1,visible:0}
-  ];
-  return s;
-}
-S=load()||seed(); save();
+const tokens={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+const myToken=()=>tokens.get('rr_mt')||tokens.get('rr_wt')||'';
+async function apiGet(params){const r=await fetch(API+'?'+new URLSearchParams(params).toString());return r.json()}
+async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});return r.json()}
+function applyState(st){S.orders=st.orders||[];S.items=st.items||[];S.workers=st.workers||[];S.payments=st.payments||[];S.settings=Object.assign({fx:1380},st.settings||{});ROLE=st.role||null;ME=st.worker||null}
+async function loadState(){const t=myToken();ROLE=null;ME=null;if(!t){LOAD_ERR='no_token';return false}LOAD_ERR='';try{const st=await apiGet({a:'state',t});if(!st.ok){LOAD_ERR=st.error||'error';return false}applyState(st);return true}catch(e){LOAD_ERR='network';return false}}
+const ERR={unauthorized:'링크가 유효하지 않습니다',forbidden:'권한이 없습니다',bad_state:'지금 상태에서는 처리할 수 없습니다',nothing_to_assign:'할당할 건이 없습니다',nothing_to_pay:'결제 예정 건이 없습니다',nothing_to_bill:'처리할 건이 없습니다',reason_required:'사유를 입력하세요',name_required:'이름을 입력하세요',duplicate_name:'이미 있는 이름입니다',no_worker:'작업자를 찾을 수 없습니다',bad_fx:'환율 범위(900~2000)가 아닙니다'};
+const errText=e=>ERR[e]||('처리 실패: '+e);
+let busy=false;
+async function act(body){const t=myToken();if(!t||busy)return;busy=true;document.body.classList.add('busy');try{const st=await apiPost(Object.assign({t},body));if(!st.ok){toast(errText(st.error));return}applyState(st);render()}catch(e){toast('서버 연결 실패. 다시 시도해 주세요.')}finally{busy=false;document.body.classList.remove('busy')}}
 const byId=id=>S.items.find(i=>i.id===id);
 const orderOf=it=>S.orders.find(o=>o.id===it.orderId);
 const itemsOf=o=>S.items.filter(i=>i.orderId===o.id);
@@ -620,34 +576,31 @@ const itemNo=it=>{const p=it.id.split('-');return p[p.length-1]};
 const workerById=id=>S.workers.find(w=>w.id===id);
 const workerName=id=>{const w=workerById(id);return w?w.name:''};
 
-/* ---------- sessions (per browser tab) ---------- */
-const sess={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
-const curWorker=()=>workerById(sess.get('rr_worker'));
-const isAdmin=()=>sess.get('rr_admin')==='1';
+/* ---------- roles (from server state) ---------- */
+const curWorker=()=>ROLE==='worker'?ME:null;
+const isAdmin=()=>ROLE==='master';
 
-/* ---------- actions ---------- */
-function newOrderId(){const k=yymmdd();S.seqDay[k]=(S.seqDay[k]||0)+1;return 'RR-'+k+'-'+pad(S.seqDay[k]).padStart(3,'0')}
+/* ---------- actions (모두 서버 처리, 응답 상태로 다시 그린다) ---------- */
 const adminName=()=>S.settings.adminName||MASTER;
-function assign(id,wid){if(!isAdmin())return;const it=byId(id),w=workerById(wid);if(!it||!w||!(it.status==='requested'||it.status==='assigned'))return;const prev=it.workerId;if(prev===w.id&&it.status==='assigned'){toast('이미 '+w.name+'에게 할당된 건입니다');return}it.workerId=w.id;it.assignedAt=iso(new Date());it.status='assigned';ev(it,'internal',adminName()+' → '+w.name+' 할당'+(prev&&prev!==w.id?' (기존 '+workerName(prev)+' 회수)':''),null,true);save();toast(w.name+'에게 할당 · '+id);render()}
-function assignOrder(oid,wid){if(!isAdmin())return;const w=workerById(wid);const o=S.orders.find(x=>x.id===oid);if(!w||!o)return;const its=itemsOf(o).filter(i=>i.status==='requested'||(i.status==='assigned'&&i.workerId!==w.id));if(!its.length){toast('할당할 건이 없습니다');return}const when=iso(new Date());its.forEach(it=>{const prev=it.workerId;it.workerId=w.id;it.assignedAt=when;it.status='assigned';ev(it,'internal',adminName()+' → '+w.name+' 할당'+(prev&&prev!==w.id?' (기존 '+workerName(prev)+' 회수)':''),when,true)});save();toast(w.name+'에게 '+its.length+'건 할당 · '+oid);render()}
-function ack(id){const w=curWorker();const it=byId(id);if(!w||!it||it.status!=='assigned'||it.workerId!==w.id)return;it.status='accepted';it.acceptedAt=iso(new Date());ev(it,'accepted','작업 시작');ev(it,'internal','작업자 '+w.name+' 발주 확인',null,true);save();toast('Acknowledged · '+id);render()}
-function claim(id){const w=curWorker();const it=byId(id);if(!w||!it||it.status!=='accepted'||it.workerId!==w.id)return;it.status='done_claimed';it.claimedAt=iso(new Date());it.demo.gone=true;ev(it,'claimed','삭제 보고 · 확인 중');ev(it,'internal','작업자 '+w.name+' 삭제 완료 보고 · '+adminName()+' 승인 대기',null,true);save();toast('Reported as removed · waiting for admin approval');render()}
-function reject(id){const w=curWorker();const it=byId(id);if(!w||!it||!(it.status==='assigned'||it.status==='accepted')||it.workerId!==w.id)return;let r=window.prompt('Reason (shown to the client). Example: genuine customer complaint, not eligible under Google policy.','');if(r===null)return;r=r.trim();if(!r){toast('A reason is required');return}it.status='rejected';it.rejectedAt=iso(new Date());it.rejectedReason=r;ev(it,'rejected','삭제 불가 · 사유: '+r+' · 비용 없음');ev(it,'internal','작업자 '+w.name+' 불가 판정',null,true);save();toast('Marked not removable · client will not be charged');render()}
-function approve(id){if(!isAdmin())return;const it=byId(id);if(!it||it.status!=='done_claimed')return;const when=iso(new Date());it.status='approved';it.approvedAt=when;it.payout={status:'pending'};it.billing={status:'unbilled'};ev(it,'verified','삭제 완료 확인',when);ev(it,'internal',adminName()+' 승인 · 결제 예정 등록 · 고객 청구 대상',when,true);save();toast('승인 · 결제 예정 등록 · '+id);render()}
-function returnItem(id){if(!isAdmin())return;const it=byId(id);if(!it||it.status!=='done_claimed')return;let r=window.prompt('반려 사유 (작업자에게 표시됩니다)','지도에 리뷰가 표시됩니다. 다시 진행해 주세요.');if(r===null)return;r=r.trim()||'다시 진행해 주세요.';const when=iso(new Date());it.status='accepted';it.returns=(it.returns||0)+1;it.returnNote=r;it.returnedAt=when;ev(it,'not_removed','삭제 진행중 · 다시 작업',when);ev(it,'internal',adminName()+' 반려 · 사유: '+r,when,true);save();toast('반려 · 작업자에게 되돌림 · '+id);render()}
-function markPaidWorker(wid){if(!isAdmin())return;const w=workerById(wid);if(!w)return;const pend=S.items.filter(i=>i.workerId===wid&&i.status==='approved'&&i.payout.status==='pending');if(!pend.length){toast('결제 예정 건이 없습니다');return}const amt=pend.length*FEE_USD;let memo=window.prompt(w.name+' · '+pend.length+'건 · '+usd(amt)+' 송금을 마친 것으로 기록합니다.\n메모 (파이버 주문번호 등, 선택)','');if(memo===null)return;memo=memo.trim();const k=yymmdd();const batch='PAY-'+k+'-'+(S.payments.filter(p=>p.id.startsWith('PAY-'+k)).length+1);const when=iso(new Date());const fx=S.settings.fx||1380;pend.forEach(it=>{it.payout={status:'paid',paidAt:when,batch,by:adminName()};ev(it,'payout','결제 완료 · '+batch+' · '+usd(FEE_USD)+' · '+adminName(),when,true)});S.payments.unshift({id:batch,at:when,workerId:wid,itemIds:pend.map(i=>i.id),count:pend.length,amountUsd:amt,fx,by:adminName(),memo});save();toast('결제 완료 기록 · '+batch+' · '+usd(amt));render()}
-function checkAuto(){if(!isAdmin())return;const targets=S.items.filter(i=>i.status==='done_claimed');if(!targets.length){toast('확인 대상이 없습니다');return}const when=iso(new Date());let r=0,v=0;targets.forEach(it=>{const gone=!!it.demo.gone;it.checks.push({at:when,result:gone?'removed':'visible',mode:'auto'});ev(it,'internal','자동 확인: '+(gone?'삭제 확인됨':'지도에 표시 중'),when,true);gone?r++:v++});S.runs.unshift({at:when,mode:'auto',checked:r+v,removed:r,visible:v});save();toast('자동 확인 · 대상 '+(r+v)+'건 · 삭제 확인 '+r+' · 표시 중 '+v+' · 승인은 별도');render()}
-function invoiceOrder(oid){const o=S.orders.find(x=>x.id===oid);if(!o)return;const its=itemsOf(o).filter(i=>i.status==='approved'&&i.billing.status==='unbilled');if(!its.length)return;const when=iso(new Date());its.forEach(it=>{it.billing={status:'invoiced',invoicedAt:when};ev(it,'invoiced','청구서 발송 ('+krw(PRICE*(1+VAT))+' · VAT 포함)',when)});save();toast('청구서 발송 처리 · '+its.length+'건 · '+krw(its.length*PRICE*(1+VAT)));render()}
-function paidOrder(oid){const o=S.orders.find(x=>x.id===oid);if(!o)return;const its=itemsOf(o).filter(i=>i.status==='approved'&&i.billing.status==='invoiced');if(!its.length)return;const when=iso(new Date());its.forEach(it=>{it.billing.status='paid';it.billing.paidAt=when;ev(it,'paid','입금 확인',when)});save();toast('입금 확인 처리 · '+its.length+'건');render()}
-function addWorker(name,login){name=(name||'').trim();login=(login||'').trim().toLowerCase();if(!name||!login){toast('이름과 로그인 ID를 입력하세요');return}if(S.workers.some(w=>w.login===login)){toast('이미 있는 로그인 ID입니다');return}const id='w'+(S.workers.length+1)+'-'+rnd(3);S.workers.push({id,name,login,pw:rnd(8),token:'tk-'+login+'-'+rnd(4),createdAt:iso(new Date())});save();toast('작업자 계정 생성 · '+login);render()}
-function resetWorkerPw(id){const w=workerById(id);if(!w)return;w.pw=rnd(8);save();toast('비밀번호 재설정 · '+w.login);render()}
-function reset(){if(!window.confirm('데모 데이터를 초기 상태로 되돌립니다.'))return;try{localStorage.removeItem(KEY)}catch(e){}S=seed();save();toast('데모 데이터 초기화');render()}
+function assign(id,wid){if(!isAdmin()||!wid)return;act({a:'assign',id,wid})}
+function assignOrder(oid,wid){if(!isAdmin()||!wid)return;act({a:'assignOrder',oid,wid})}
+function ack(id){if(!curWorker())return;act({a:'ack',id})}
+function claim(id){if(!curWorker())return;act({a:'claim',id})}
+function reject(id){if(!curWorker())return;let r=window.prompt('Reason (shown to the client). Example: genuine customer complaint, not eligible under Google policy.','');if(r===null)return;r=r.trim();if(!r){toast('A reason is required');return}act({a:'reject',id,reason:r})}
+function approve(id){if(!isAdmin())return;act({a:'approve',id})}
+function returnItem(id){if(!isAdmin())return;let r=window.prompt('반려 사유 (작업자에게 표시됩니다)','지도에 리뷰가 표시됩니다. 다시 진행해 주세요.');if(r===null)return;act({a:'return',id,note:r.trim()})}
+function markPaidWorker(wid){if(!isAdmin())return;const w=workerById(wid);if(!w)return;const pend=S.items.filter(i=>i.workerId===wid&&i.status==='approved'&&i.payout.status==='pending');if(!pend.length){toast('결제 예정 건이 없습니다');return}let memo=window.prompt(w.name+' · '+pend.length+'건 · '+usd(pend.length*FEE_USD)+' 송금을 마친 것으로 기록합니다.\n메모 (송금 내역 등, 선택)','');if(memo===null)return;act({a:'payWorker',wid,memo:memo.trim()})}
+function invoiceOrder(oid){if(!isAdmin())return;act({a:'invoice',oid})}
+function paidOrder(oid){if(!isAdmin())return;act({a:'paid',oid})}
+function addWorker(name){if(!isAdmin())return;name=(name||'').trim();if(!name){toast('작업자 이름을 입력하세요');return}act({a:'addWorker',name})}
+function setWorkerActive(wid,active){if(!isAdmin())return;act({a:'setWorker',wid,active:!!active})}
+function resetToken(wid){if(!isAdmin())return;if(!window.confirm('이 작업자의 개인 링크를 새로 만듭니다. 이전 링크는 즉시 무효가 됩니다.'))return;act({a:'resetToken',wid})}
 
-/* ---------- FX (USD/KRW) ---------- */
+/* ---------- FX (USD/KRW): 브라우저가 조회해 서버 설정에 저장 (마스터만) ---------- */
 let fxBusy=false,fxTried=false;
-async function fxRefresh(manual){const st=S.settings;if(!manual){if(fxTried)return;if(st.fxUpdatedAt&&new Date(st.fxUpdatedAt)>=lastNine())return}fxTried=true;if(fxBusy)return;fxBusy=true;const now=new Date();
-  try{let v=null;for(const src of [['https://open.er-api.com/v6/latest/USD',j=>j&&j.rates&&j.rates.KRW,'open.er-api.com'],['https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW',j=>j&&j.rates&&j.rates.KRW,'frankfurter.dev']]){try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),5000);const r=await fetch(src[0],{signal:ctl.signal});clearTimeout(t);const j=await r.json();v=src[1](j);if(v){st.fxProvider=src[2];break}}catch(e){}}if(!v)throw new Error('no rate');st.fx=Math.round(v);st.fxUpdatedAt=iso(now);st.fxSource='auto';st.fxError=null;save();if(manual)toast('환율 갱신 · '+st.fx.toLocaleString()+' ('+st.fxProvider+')');if(currentView==='settle')render()}
-  catch(e){st.fxError=iso(now);save();if(manual)toast('환율 조회 실패 · 기존 값 유지');if(currentView==='settle')render()}
+async function fxRefresh(manual){if(!isAdmin())return;const st=S.settings;if(!manual){if(fxTried)return;if(st.fxUpdatedAt&&new Date(st.fxUpdatedAt)>=lastNine())return}fxTried=true;if(fxBusy)return;fxBusy=true;
+  try{let v=null,prov='';for(const src of [['https://open.er-api.com/v6/latest/USD',j=>j&&j.rates&&j.rates.KRW,'open.er-api.com'],['https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW',j=>j&&j.rates&&j.rates.KRW,'frankfurter.dev']]){try{const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),5000);const r=await fetch(src[0],{signal:ctl.signal});clearTimeout(t);const j=await r.json();v=src[1](j);if(v){prov=src[2];break}}catch(e){}}if(!v)throw new Error('no rate');await act({a:'fx',value:Math.round(v),source:'auto'});if(manual)toast('환율 갱신 · '+Math.round(v).toLocaleString()+' ('+prov+')')}
+  catch(e){if(manual)toast('환율 조회 실패 · 기존 값 유지');if(currentView==='settle')render()}
   finally{fxBusy=false}}
 
 /* ---------- helpers ---------- */
@@ -657,7 +610,6 @@ const pillKo=s=>`<span class="pill ${s}">${KO[s]}</span>`;
 const pillKoC=s=>`<span class="pill ${s}">${KO_C[s]}</span>`;
 const pillEn=s=>`<span class="pill ${s}">${EN[s]}</span>`;
 const statusUrl=id=>location.href.split('#')[0]+'#/status/'+id;
-const workerUrl=w=>location.href.split('#')[0]+'#/w/'+w.token;
 function normUrl(u){u=(u||'').trim();if(!u)return '';if(!/^https?:\/\//i.test(u))u='https://'+u;return u}
 const GTLD='(com|co\\.[a-z]{2}|com\\.[a-z]{2}|[a-z]{2})';
 function isReviewUrl(u){u=normUrl(u);if(!u||/\s/.test(u))return false;let x;try{x=new URL(u)}catch(e){return false}if(x.protocol!=='https:'&&x.protocol!=='http:')return false;const h=x.hostname.toLowerCase(),path=x.pathname;
@@ -761,7 +713,7 @@ function viewOrder(){
 
 <section class="section" style="background:var(--bg-2);padding-top:40px;padding-bottom:40px"><div class="wrap">
   <div class="card pad" id="status-lookup" style="max-width:760px">
-    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) ${esc(S.orders[0].id)}</p>
+    <h3 style="font-size:16px;font-weight:800">접수 현황 조회</h3><p class="muted small">접수번호를 입력하세요. 예) RR-260909-001</p>
     <form id="lookupForm" class="linkbox" style="margin-top:10px"><input name="oid" aria-label="접수번호" placeholder="RR-YYMMDD-000" style="text-transform:uppercase"><button class="btn btn-tonal btn-sm" type="submit">조회</button></form>
   </div>
 </div></section>
@@ -795,51 +747,51 @@ function submitOrder(form){
   else if(!revs.length){se.textContent='리뷰 링크를 1건 이상 붙여넣어 주세요.';se.classList.add('show');ok=false}
   else se.classList.remove('show');
   if(!ok){const first=form.querySelector('.invalid, .sheet-err.show');if(first)first.scrollIntoView({block:'center'});return}
-  const id=newOrderId();const when=iso(new Date());const name=f.cname.value.trim();
-  S.orders.push({id,business:name,mapsUrl:'',contact:{name,phone:f.phone.value.trim(),email:'',kakao:''},createdAt:when,note:''});
-  revs.forEach((r,i)=>{const it={id:id+'-'+(i+1),orderId:id,url:r.url,author:'',snippet:'',status:'requested',workerId:null,createdAt:when,checks:[],events:[],payout:{status:'none'},billing:{status:'none'},returns:0,demo:{gone:true}};ev(it,'requested','접수',when);S.items.push(it)});
-  save();track('order_submit',{links:revs.length,value:revs.length*PRICE,currency:'KRW',order_id:id,utm_source:ATTRIB.utm_source||'',utm_medium:ATTRIB.utm_medium||'',utm_campaign:ATTRIB.utm_campaign||''});
-  if(ORDER_ENDPOINT){try{fetch(ORDER_ENDPOINT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({id,contact:{name,phone:f.phone.value.trim()},links:revs.map(r=>r.url),createdAt:when,source:location.origin,attrib:ATTRIB})}).catch(()=>{})}catch(e){}}
-  location.hash='#/order/done/'+id;
+  const when=iso(new Date());const name=f.cname.value.trim();const phone=f.phone.value.trim();const links=revs.map(r=>r.url);
+  const btn=form.querySelector('button[type=submit]');const btnText=btn?btn.innerHTML:'';if(btn){btn.disabled=true;btn.textContent='접수 중…'}
+  track('order_submit',{links:links.length,value:links.length*PRICE,currency:'KRW',utm_source:ATTRIB.utm_source||'',utm_medium:ATTRIB.utm_medium||'',utm_campaign:ATTRIB.utm_campaign||''});
+  (async()=>{try{const r=await apiPost({contact:{name,phone},links,createdAt:when,source:location.origin,attrib:ATTRIB});if(!(r&&r.ok&&r.id))throw new Error(r&&r.error||'fail');
+      tokens.set('rr_last_order',JSON.stringify({id:r.id,name,count:links.length,when}));location.hash='#/order/done/'+r.id}
+    catch(e){toast('접수 전송에 실패했습니다. 잠시 후 다시 시도하거나 카카오톡으로 문의해 주세요.');if(btn){btn.disabled=false;btn.innerHTML=btnText}}})();
 }
 
 /* ---------- view: done ---------- */
-function viewDone(id){const o=S.orders.find(x=>x.id===id);if(!o)return viewNotFound();const its=itemsOf(o);
+function viewDone(id){let o=null;try{o=JSON.parse(tokens.get('rr_last_order')||'null')}catch(e){}if(!o||o.id!==id)o={id,name:'',count:0};
   return topbar('구글 리뷰 삭제')+`<div class="done">
-  <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${esc(o.contact.name)} 담당자님, 리뷰 ${its.length}건을 접수했습니다.</h2>
+  <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${o.name?esc(o.name)+' 담당자님, ':''}리뷰${o.count?' '+o.count+'건':''}를 접수했습니다.</h2>
   <div class="idbox"><div class="small muted">접수번호</div><div class="id">${esc(o.id)}</div><div class="small muted" style="margin-top:8px">조회 링크</div><div class="linkbox"><input readonly value="${esc(statusUrl(o.id))}" id="statusLink"><button class="btn btn-outlined btn-sm" type="button" data-action="copy" data-target="statusLink">복사</button></div></div>
   <p class="next-line">24시간 안에 가능 여부를 알려드리고, 삭제가 확인된 뒤에만 청구서를 보냅니다. 입금은 국민은행 079801-04-194872(주식회사 스트라디지)로 하시면 됩니다.</p>
   <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-tonal" href="#/status/${esc(o.id)}">접수 현황</a><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 function viewNotFound(){return topbar('구글 리뷰 삭제')+`<div class="done"><h2>접수번호를 찾을 수 없습니다.</h2><p class="muted" style="margin-top:8px">형식은 RR-YYMMDD-000입니다. 접수 때 받은 조회 링크를 확인해 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 
 /* ---------- view: status (customer) ---------- */
-function viewStatus(id){const o=S.orders.find(x=>x.id===id);if(!o)return viewNotFound();const its=itemsOf(o);
+async function renderStatus(id){if(!id)return viewNotFound();try{const r=await apiGet({a:'status',id});if(!r.ok)return viewNotFound();return viewStatus(r)}catch(e){return topbar('구글 리뷰 삭제')+`<div class="done"><h2>서버에 연결하지 못했습니다.</h2><p class="muted" style="margin-top:8px">잠시 후 다시 시도해 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}}
+function viewStatus(r){const o=r.order,its=r.items||[];
   const done=its.filter(i=>i.status==='approved');const unb=done.filter(i=>i.billing.status==='unbilled').length,inv=done.filter(i=>i.billing.status==='invoiced').length,pd=done.filter(i=>i.billing.status==='paid').length;
   const rows=its.map(it=>{let note='';
-    if(it.status==='approved')note=`삭제 완료 ${fmtFull(it.approvedAt)} · ${BILL_KO[it.billing.status]}`;
+    if(it.status==='approved')note=`삭제 완료 ${fmtFull(it.approvedAt)} · ${BILL_KO[it.billing.status]||''}`;
     else if(it.status==='done_claimed')note='지워졌는지 확인 중';
-    else if(it.status==='rejected')note=`${esc(it.rejectedReason)} · 비용 없음`;
+    else if(it.status==='rejected')note=`${esc(it.rejectedReason)} · 0원`;
     else if(it.status==='accepted')note=`작업 중 (${fmtFull(it.acceptedAt)} 시작)`;
     else if(it.status==='assigned')note='작업 중';
     else note='가능 여부 확인 중 (24시간 안에)';
-    return `<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}${it.snippet?`<div class="sub">“${esc(it.snippet)}”</div>`:''}</td><td class="c">${esc(it.author)||'<span class="muted">—</span>'}</td><td class="c">${pillKoC(it.status)}</td><td class="c">${note}</td><td class="c num">${it.status==='approved'?krw(PRICE):'<span class="muted">0</span>'}</td></tr>`}).join('');
-  const evs=[];its.forEach(it=>it.events.filter(e=>!e.internal).forEach(e=>evs.push({at:e.at,text:'#'+itemNo(it)+' '+e.text})));evs.sort((a,b)=>a.at<b.at?1:-1);
+    return `<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}</td><td class="c">${pillKoC(it.status)}</td><td class="c">${note}</td><td class="c num">${it.status==='approved'?krw(PRICE):'<span class="muted">0</span>'}</td></tr>`}).join('');
+  const evs=[];its.forEach(it=>(it.events||[]).forEach(e=>evs.push({at:e.at,text:'#'+itemNo(it)+' '+e.text})));evs.sort((a,b)=>a.at<b.at?1:-1);
   return topbar('구글 리뷰 삭제',`<span>접수 현황</span>`)+`<div class="wrap" style="padding-top:36px;padding-bottom:60px">
-  <div class="eyebrow">접수 현황</div><h2 style="font-size:26px;margin-top:6px">${esc(o.business)}</h2>
-  <p class="muted small" style="margin-top:4px">접수번호 <span class="mono">${esc(o.id)}</span> · 접수 ${fmtFull(o.createdAt)} · 담당 ${esc(o.contact.name)}${o.mapsUrl?` · <a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener">병원 프로필</a>`:''}</p>
+  <div class="eyebrow">접수 현황</div><h2 style="font-size:26px;margin-top:6px">접수번호 <span class="mono">${esc(o.id)}</span></h2>
+  <p class="muted small" style="margin-top:4px">접수 ${fmtFull(o.createdAt)} · 리뷰 ${its.length}건</p>
   <div class="kpis"><div class="kpi"><div class="l">접수</div><div class="v">${its.length}</div><div class="s">건</div></div><div class="kpi good"><div class="l">삭제 완료</div><div class="v">${done.length}</div><div class="s">건 · 청구 대상</div></div><div class="kpi"><div class="l">진행 중</div><div class="v">${its.filter(i=>i.status==='assigned'||i.status==='accepted'||i.status==='done_claimed').length}</div><div class="s">건 · 비용 없음</div></div><div class="kpi pink"><div class="l">청구 금액</div><div class="v">${krw(done.length*PRICE)}</div><div class="s">VAT 별도 · 청구 예정 ${unb} · 입금 대기 ${inv} · 입금 완료 ${pd}</div></div></div>
-  <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:260px">리뷰 링크</th><th scope="col">작성자</th><th scope="col">상태</th><th scope="col" style="min-width:220px">진행</th><th scope="col" class="num">청구 (VAT 별도)</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:260px">리뷰 링크</th><th scope="col">상태</th><th scope="col" style="min-width:220px">진행</th><th scope="col" class="num">청구 (VAT 별도)</th></tr></thead><tbody>${rows}</tbody></table></div>
   <div class="sec-h"><h3>진행 이력</h3></div>
   <ul class="ev-list" style="font-size:13px">${evs.map(e=>`<li><span>${fmt(e.at)}</span>${esc(e.text)}</li>`).join('')}</ul>
-  <div class="note indigo" style="margin-top:18px">삭제가 확인된 날 청구서를 보내드리고, 14일간 다시 올라오는지 확인합니다.</div>
+  <div class="note indigo" style="margin-top:18px">삭제가 확인된 날 청구서를 보내드리고, 14일간 다시 올라오는지 확인합니다. 리뷰 삭제 실패시 0원입니다.</div>
   <div style="margin-top:18px"><a class="btn btn-outlined btn-sm" href="#/order">서비스 안내</a></div></div>`}
 
 /* ---------- view: worker login + dashboard (EN) ---------- */
-function viewWorkerLogin(msg){return topbar('Removal Queue')+`<div class="done" style="max-width:460px"><div class="card pad"><div class="eyebrow">Worker sign in</div><h2 style="font-size:22px;margin-top:6px">Sign in to your queue</h2><p class="muted small" style="margin-top:4px">Use the account the admin created for you, or open your personal link.</p>
-  <form id="workerLogin" style="margin-top:14px"><div class="field"><div class="md-field"><input id="w-login" name="login" autocomplete="username" placeholder=" "><label for="w-login">Login ID</label></div></div><div class="field"><div class="md-field"><input id="w-pw" name="pw" type="password" autocomplete="current-password" placeholder=" "><label for="w-pw">Password</label></div></div>${msg?`<div class="note warn" style="margin-top:12px">${esc(msg)}</div>`:''}<div class="submit"><button class="btn btn-tonal" type="submit">Sign in</button></div></form>
-  <p class="mini" style="margin-top:14px">Demo accounts: partner01 / demo1234 · partner02 / demo5678</p></div></div>`}
+function viewLoading(){return topbar(BRAND)+`<div class="done"><p class="muted">불러오는 중…</p></div>`}
+function viewWorkerNoAccess(msg){return topbar('Removal Queue')+`<div class="done" style="max-width:460px"><div class="card pad"><div class="eyebrow">Worker access</div><h2 style="font-size:22px;margin-top:6px">Open your personal link</h2><p class="muted small" style="margin-top:4px">There is no password. The admin gives each worker a personal link (reviewclear.kr/#/w/…). Open that link to see your queue.</p>${msg?`<div class="note warn" style="margin-top:12px">${esc(msg)}</div>`:''}</div></div>`}
 function viewWorker(){
-  const w=curWorker();if(!w)return viewWorkerLogin();
+  const w=curWorker();if(!w)return viewWorkerNoAccess();
   const mine=S.items.filter(i=>i.workerId===w.id).sort((a,b)=>a.createdAt<b.createdAt?1:-1);
   const groups={new:mine.filter(i=>i.status==='assigned'),progress:mine.filter(i=>i.status==='accepted'),reported:mine.filter(i=>i.status==='done_claimed'),approved:mine.filter(i=>i.status==='approved'),all:mine};
   const tab=UI.workerTab in groups?UI.workerTab:'new';const list=groups[tab];
@@ -859,7 +811,7 @@ function viewWorker(){
       <td class="c" style="white-space:nowrap">${act}</td></tr>`}).join('')
     :`<tr><td colspan="5" class="c"><div class="empty">Nothing here.</div></td></tr>`;
   const tabBtn=(k,l)=>`<button data-action="wtab" data-tab="${k}" class="${tab===k?'on':''}">${l}<span class="cnt">${groups[k].length}</span></button>`;
-  return topbar('Removal Queue',`<span>Worker · ${esc(w.name)}</span><span class="sep"></span><span>${ymd()} · KST</span><button class="btn btn-outlined btn-sm" data-action="worker-logout"><span class="msym s18">logout</span>Sign out</button>`)+`<div class="wrap dash">
+  return topbar('Removal Queue',`<span>Worker · ${esc(w.name)}</span><span class="sep"></span><span>${ymd()} · KST</span><button class="btn btn-outlined btn-sm" data-action="refresh"><span class="msym s18">refresh</span>Refresh</button><button class="btn btn-outlined btn-sm" data-action="worker-logout"><span class="msym s18">logout</span>Sign out</button>`)+`<div class="wrap dash">
   <div class="dash-h"><div><h1>Removal Queue</h1><div class="sub">The admin assigns reviews to you. Acknowledge each new item within 24h, then report the removal once the review is gone from Google Maps. The admin approves each report; payouts follow approved removals only.</div></div></div>
   <div class="kpis"><div class="kpi"><div class="l">NEW</div><div class="v">${groups.new.length}</div><div class="s">assigned to you</div></div><div class="kpi"><div class="l">IN PROGRESS</div><div class="v">${groups.progress.length}</div><div class="s">incl. ${groups.progress.filter(i=>i.returns).length} returned</div></div><div class="kpi warn"><div class="l">AWAITING APPROVAL</div><div class="v">${groups.reported.length}</div><div class="s">reported to admin</div></div><div class="kpi good"><div class="l">APPROVED THIS MONTH</div><div class="v">${aMonth}</div><div class="s">${month}</div></div><div class="kpi pink"><div class="l">PAYOUT PENDING</div><div class="v">${usd(pendUsd)}</div><div class="s">${usd(FEE_USD)} per approved removal</div></div></div>
   <div class="split"><div>
@@ -872,18 +824,14 @@ function viewWorker(){
 }
 
 /* ---------- view: admin login + settlement (KO) ---------- */
-function viewAdminLogin(msg){return topbar('마스터 관리자')+`<div class="done" style="max-width:420px"><div class="card pad"><div class="eyebrow">마스터 관리자</div><h2 style="font-size:22px;margin-top:6px">마스터 로그인</h2>
-  <form id="adminLogin" style="margin-top:14px"><div class="field"><div class="md-field"><input id="a-pw" name="pw" type="password" autocomplete="current-password" placeholder=" "><label for="a-pw">비밀번호</label></div></div>${msg?`<div class="note warn" style="margin-top:12px">${esc(msg)}</div>`:''}<div class="submit"><button class="btn btn-tonal" type="submit">로그인</button></div></form>
-  <p class="mini" style="margin-top:14px">데모 비밀번호: admin1234</p></div></div>`}
+function viewAdminNoAccess(msg){return topbar('마스터 관리자')+`<div class="done" style="max-width:460px"><div class="card pad"><div class="eyebrow">마스터 관리자</div><h2 style="font-size:22px;margin-top:6px">개인 링크로 접속하세요</h2><p class="muted small" style="margin-top:4px">비밀번호는 없습니다. 접수 시트의 설정 탭에 있는 master_link로 들어오면 됩니다. 링크가 새면 그 탭의 master_token 값을 바꾸세요.</p>${msg?`<div class="note warn" style="margin-top:12px">${esc(msg)}</div>`:''}</div></div>`}
 function dbGroups(){return {all:S.items,requested:S.items.filter(i=>i.status==='requested'),progress:S.items.filter(i=>i.status==='assigned'||i.status==='accepted'),done_claimed:S.items.filter(i=>i.status==='done_claimed'),pending:S.items.filter(i=>i.status==='approved'&&i.payout.status==='pending'),paid:S.items.filter(i=>i.status==='approved'&&i.payout.status==='paid'),rejected:S.items.filter(i=>i.status==='rejected')}}
 const tsvCell=v=>{v=String(v==null?'':v).replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(v)?"'"+v:v};
-const lastCheck=it=>it.checks.length?it.checks[it.checks.length-1]:null;
-const checkLabel=it=>{const c=lastCheck(it);if(!c||(it.claimedAt&&c.at<it.claimedAt))return '<span class="mini">확인 전</span>';return c.result==='removed'?`<span class="pill approved">삭제 확인됨</span><div class="sub">${fmt(c.at)}</div>`:`<span class="pill requested">지도에 표시 중</span><div class="sub">${fmt(c.at)}</div>`};
 const workerLoad=w=>S.items.filter(i=>i.workerId===w.id&&(i.status==='assigned'||i.status==='accepted'||i.status==='done_claimed')).length;
-const workerSelect=(key,sel)=>`<select class="assign" data-assign="${esc(key)}" aria-label="작업자 선택">${S.workers.map(w=>`<option value="${esc(w.id)}" ${sel===w.id?'selected':''}>${esc(w.name)} (진행 ${workerLoad(w)})</option>`).join('')}</select>`;
+const workerSelect=(key,sel)=>`<select class="assign" data-assign="${esc(key)}" aria-label="작업자 선택">${S.workers.filter(w=>w.active).map(w=>`<option value="${esc(w.id)}" ${sel===w.id?'selected':''}>${esc(w.name)} (진행 ${workerLoad(w)})</option>`).join('')}</select>`;
 const payLabel=it=>it.status!=='approved'?'—':(it.payout.status==='paid'?'결제 완료 '+esc(it.payout.batch):'결제 예정');
 function viewSettle(){
-  if(!isAdmin())return viewAdminLogin();
+  if(!isAdmin())return viewAdminNoAccess();
   const st=S.settings;const fx=st.fx||1380;const me=adminName();
   const toAssign=S.items.filter(i=>i.status==='requested'||i.status==='assigned').sort((a,b)=>a.createdAt<b.createdAt?-1:1);
   const inProg=S.items.filter(i=>i.status==='assigned'||i.status==='accepted');
@@ -891,7 +839,6 @@ function viewSettle(){
   const approved=S.items.filter(i=>i.status==='approved');
   const pend=approved.filter(i=>i.payout.status==='pending');
   const unbilled=approved.filter(i=>i.billing.status==='unbilled'),invoiced=approved.filter(i=>i.billing.status==='invoiced'),paid=approved.filter(i=>i.billing.status==='paid');
-  const lastRun=S.runs.slice().sort((a,b)=>a.at<b.at?1:-1)[0];
   /* 할당 */
   const aOrders=S.orders.filter(o=>toAssign.some(i=>i.orderId===o.id)).sort((a,b)=>a.createdAt<b.createdAt?-1:1);
   const aRows=aOrders.length?aOrders.map(o=>{const its=toAssign.filter(i=>i.orderId===o.id);const unas=its.filter(i=>i.status==='requested').length;
@@ -900,17 +847,16 @@ function viewSettle(){
     return head+body}).join('')
     :`<tr><td colspan="6" class="c"><div class="empty">할당 대기 건이 없습니다. 고객이 접수하면 여기에 쌓입니다.</div></td></tr>`;
   /* 승인 */
-  const qRows=queue.length?queue.map((it,i)=>{const o=orderOf(it);return `<tr><td class="n">${i+1}</td><td class="c"><div class="mono">${esc(it.id)}</div><div class="sub">${esc(o?o.business:'')} · ${esc(workerName(it.workerId))||'—'}</div></td><td class="c">${linkA(it.url)}${o&&o.mapsUrl?`<div class="sub"><a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener">병원 프로필</a></div>`:''}</td><td class="c">${esc(it.author)||'<span class="muted">—</span>'}${it.snippet?`<div class="sub">“${esc(it.snippet)}”</div>`:''}</td><td class="c num">${fmtFull(it.claimedAt)}${it.returns?`<div class="sub">반려 ${it.returns}회 후 재보고</div>`:''}</td><td class="c">${checkLabel(it)}</td><td class="c"><div class="acts-inline"><button class="btn btn-filled btn-sm" data-action="approve" data-id="${esc(it.id)}"><span class="msym s18">task_alt</span>승인 → 결제 예정</button><button class="btn btn-outlined btn-sm" data-action="return" data-id="${esc(it.id)}">반려</button></div></td></tr>`}).join('')
-    :`<tr><td colspan="7" class="c"><div class="empty">승인 대기 건이 없습니다. 작업자가 삭제 완료를 보고하면 여기에 쌓입니다.</div></td></tr>`;
+  const qRows=queue.length?queue.map((it,i)=>{const o=orderOf(it);return `<tr><td class="n">${i+1}</td><td class="c"><div class="mono">${esc(it.id)}</div><div class="sub">${esc(o?o.business:'')} · ${esc(workerName(it.workerId))||'—'}</div></td><td class="c">${linkA(it.url)}${o&&o.mapsUrl?`<div class="sub"><a href="${esc(o.mapsUrl)}" target="_blank" rel="noopener">병원 프로필</a></div>`:''}</td><td class="c">${esc(it.author)||'<span class="muted">—</span>'}${it.snippet?`<div class="sub">“${esc(it.snippet)}”</div>`:''}</td><td class="c num">${fmtFull(it.claimedAt)}${it.returns?`<div class="sub">반려 ${it.returns}회 후 재보고</div>`:''}</td><td class="c"><div class="acts-inline"><button class="btn btn-filled btn-sm" data-action="approve" data-id="${esc(it.id)}"><span class="msym s18">task_alt</span>승인 → 결제 예정</button><button class="btn btn-outlined btn-sm" data-action="return" data-id="${esc(it.id)}">반려</button></div></td></tr>`}).join('')
+    :`<tr><td colspan="6" class="c"><div class="empty">승인 대기 건이 없습니다. 작업자가 삭제 완료를 보고하면 여기에 쌓입니다.</div></td></tr>`;
   /* 결제 */
   const wPayRows=S.workers.map(w=>{const mine=S.items.filter(i=>i.workerId===w.id&&i.status==='approved');const p=mine.filter(i=>i.payout.status==='pending');const done=mine.filter(i=>i.payout.status==='paid');
-    return `<tr><td><b>${esc(w.name)}</b><div class="sub">${esc(w.login)}</div></td><td class="num">${p.length}건</td><td class="num">${usd(p.length*FEE_USD)}<div class="sub">≈ ${krw(p.length*FEE_USD*fx)}</div></td><td class="num">${usd(done.length*FEE_USD)}<div class="sub">${done.length}건</div></td><td style="white-space:nowrap"><button class="btn btn-tonal btn-sm" data-action="pay-worker" data-id="${esc(w.id)}" ${p.length?'':'disabled'}><span class="msym s18">payments</span>결제 완료 처리</button></td></tr>`}).join('');
+    return `<tr><td><b>${esc(w.name)}</b>${w.active?'':'<div class="sub">비활성</div>'}</td><td class="num">${p.length}건</td><td class="num">${usd(p.length*FEE_USD)}<div class="sub">≈ ${krw(p.length*FEE_USD*fx)}</div></td><td class="num">${usd(done.length*FEE_USD)}<div class="sub">${done.length}건</div></td><td style="white-space:nowrap"><button class="btn btn-tonal btn-sm" data-action="pay-worker" data-id="${esc(w.id)}" ${p.length?'':'disabled'}><span class="msym s18">payments</span>결제 완료 처리</button></td></tr>`}).join('');
   const histRows=S.payments.length?S.payments.slice().sort((a,b)=>a.at<b.at?1:-1).map(p=>`<tr><td class="num">${fmtFull(p.at)}</td><td class="mono">${esc(p.id)}</td><td>${esc(workerName(p.workerId))||'—'}</td><td class="num">${p.count}건</td><td class="num">${usd(p.amountUsd)}<div class="sub">≈ ${krw(p.amountUsd*p.fx)} (환율 ${Number(p.fx).toLocaleString()})</div></td><td>${esc(p.memo)||'<span class="muted">—</span>'}<div class="sub mono">${p.itemIds.map(esc).join(', ')}</div></td><td>${esc(p.by)}</td></tr>`).join('')
     :`<tr><td colspan="7"><div class="empty">결제 이력이 없습니다.</div></td></tr>`;
   /* 청구 */
   const billRows=S.orders.filter(o=>itemsOf(o).some(i=>i.status==='approved')).map(o=>{const its=itemsOf(o).filter(i=>i.status==='approved');const u=its.filter(i=>i.billing.status==='unbilled').length,v=its.filter(i=>i.billing.status==='invoiced').length,p=its.filter(i=>i.billing.status==='paid').length;
     return `<tr><td><div style="font-weight:700">${esc(o.business)}</div><div class="sub mono">${esc(o.id)} · ${o.contact.name!==o.business?esc(o.contact.name)+' ':''}${esc(o.contact.phone)}</div></td><td class="num">${its.length}건</td><td class="num">${krw(its.length*PRICE)}<div class="sub">VAT 포함 ${krw(its.length*PRICE*(1+VAT))}</div></td><td><span class="chk">청구 예정 ${u}</span><span class="chk">입금 대기 ${v}</span><span class="chk">입금 완료 ${p}</span></td><td style="white-space:nowrap"><button class="btn btn-tonal btn-sm" data-action="invoice" data-oid="${esc(o.id)}" ${u?'':'disabled'}>청구서 발송</button> <button class="btn btn-outlined btn-sm" data-action="paid" data-oid="${esc(o.id)}" ${v?'':'disabled'}>입금 확인</button></td></tr>`}).join('')||`<tr><td colspan="5"><div class="empty">청구 대상이 없습니다.</div></td></tr>`;
-  const runRows=S.runs.slice().sort((a,b)=>a.at<b.at?1:-1).map(r=>`<tr><td class="num">${fmtFull(r.at)}</td><td class="num">${r.checked}</td><td class="num" style="color:var(--good)">${r.removed}</td><td class="num" style="color:var(--pink-ink)">${r.visible}</td></tr>`).join('')||`<tr><td colspan="4"><div class="empty">실행 기록 없음</div></td></tr>`;
   /* DB */
   const dbg=dbGroups();const dbTab=UI.dbTab in dbg?UI.dbTab:'all';const dbList=dbg[dbTab].slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1);
   const dbRows=dbList.length?dbList.map((it,i)=>{const o=orderOf(it);const bill=it.status!=='approved'?'—':BILL_KO[it.billing.status];
@@ -918,17 +864,17 @@ function viewSettle(){
     :`<tr><td colspan="12" class="c"><div class="empty">해당 상태의 리뷰가 없습니다.</div></td></tr>`;
   const dbTabBtn=(k,l)=>`<button data-action="dbtab" data-tab="${k}" class="${dbTab===k?'on':''}">${l}<span class="cnt">${dbg[k].length}</span></button>`;
   const month=ymd().slice(0,7);
-  const wRows=S.workers.map(w=>{const mine=S.items.filter(i=>i.workerId===w.id);const done=mine.filter(i=>i.status==='approved'&&i.approvedAt&&ymd(i.approvedAt).startsWith(month)).length;const pendW=mine.filter(i=>i.status==='approved'&&i.payout.status==='pending').length;return `<tr><td class="c"><b>${esc(w.name)}</b><div class="sub">${esc(w.login)}</div></td><td class="c mono">${esc(w.pw)}</td><td class="c"><input readonly class="mono" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg-2);color:var(--ink)" value="${esc(workerUrl(w))}" id="wl-${esc(w.id)}"></td><td class="c num">${workerLoad(w)}</td><td class="c num">${done}</td><td class="c num">${usd(pendW*FEE_USD)}</td><td class="c" style="white-space:nowrap"><button class="btn btn-outlined btn-sm" data-action="copy" data-target="wl-${esc(w.id)}">링크 복사</button> <button class="btn btn-outlined btn-sm" data-action="w-reset" data-id="${esc(w.id)}">비밀번호 재설정</button></td></tr>`}).join('');
+  const wRows=S.workers.map(w=>{const mine=S.items.filter(i=>i.workerId===w.id);const done=mine.filter(i=>i.status==='approved'&&i.approvedAt&&ymd(i.approvedAt).startsWith(month)).length;const pendW=mine.filter(i=>i.status==='approved'&&i.payout.status==='pending').length;return `<tr><td class="c"><b>${esc(w.name)}</b><div class="sub">${w.active?'활성':'비활성 · 링크 차단됨'} · 등록 ${fmt(w.createdAt)}</div></td><td class="c"><input readonly class="mono" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg-2);color:var(--ink)" value="${esc(w.link||'')}" id="wl-${esc(w.id)}"></td><td class="c num">${workerLoad(w)}</td><td class="c num">${done}</td><td class="c num">${usd(pendW*FEE_USD)}</td><td class="c" style="white-space:nowrap"><button class="btn btn-outlined btn-sm" data-action="copy" data-target="wl-${esc(w.id)}">링크 복사</button> <button class="btn btn-outlined btn-sm" data-action="w-token" data-id="${esc(w.id)}">링크 재발급</button> <button class="btn btn-outlined btn-sm" data-action="w-active" data-id="${esc(w.id)}" data-active="${w.active?'0':'1'}">${w.active?'비활성화':'다시 활성화'}</button></td></tr>`}).join('');
   const fxLabel=st.fxSource==='auto'?'자동 갱신 '+fmt(st.fxUpdatedAt)+(st.fxProvider?' · '+st.fxProvider:''):(st.fxSource==='manual'?'수동 입력 '+fmt(st.fxUpdatedAt):'기본값');
   return topbar('마스터 관리자',`<span>${esc(me)}</span><span class="sep"></span><span>${ymd()} · KST</span><button class="btn btn-outlined btn-sm" data-action="admin-logout"><span class="msym s18">logout</span>로그아웃</button>`)+`<div class="wrap dash">
-  <div class="dash-h"><div><h1>마스터 관리자</h1><div class="sub">접수 → 작업자 할당 → 작업자 삭제 완료 보고 → 마스터 승인(결제 예정) → 송금 후 결제 완료 기록. 승인한 건만 작업자 결제와 고객 청구 대상입니다. 모든 처리는 ${esc(me)} 이름으로 이력에 남습니다.</div></div><div><button class="btn btn-outlined" data-action="check-auto"><span class="msym">travel_explore</span>자동 확인 실행 (참고용)</button></div></div>
+  <div class="dash-h"><div><h1>마스터 관리자</h1><div class="sub">접수 → 작업자 할당 → 작업자 삭제 완료 보고 → 마스터 승인(결제 예정) → 송금 후 결제 완료 기록. 승인한 건만 작업자 결제와 고객 청구 대상입니다. 모든 처리는 ${esc(me)} 이름으로 이력에 남습니다.</div></div><div><button class="btn btn-outlined" data-action="refresh"><span class="msym">refresh</span>새로고침</button></div></div>
   <div class="kpis"><div class="kpi warn"><div class="l">할당 대기</div><div class="v">${toAssign.filter(i=>i.status==='requested').length}</div><div class="s">확인 대기 ${toAssign.filter(i=>i.status==='assigned').length}</div></div><div class="kpi"><div class="l">진행 중</div><div class="v">${inProg.length}</div><div class="s">반려 후 재작업 ${inProg.filter(i=>i.returns).length}</div></div><div class="kpi warn"><div class="l">승인 대기</div><div class="v">${queue.length}</div><div class="s">작업자 완료 보고</div></div><div class="kpi pink"><div class="l">결제 예정</div><div class="v">${usd(pend.length*FEE_USD)}</div><div class="s">${pend.length}건 · ≈ ${krw(pend.length*FEE_USD*fx)}</div></div><div class="kpi"><div class="l">고객 청구 예정</div><div class="v">${krw(unbilled.length*PRICE)}</div><div class="s">${unbilled.length}건 · VAT 별도</div></div><div class="kpi bad"><div class="l">미수금</div><div class="v">${krw(invoiced.length*PRICE*(1+VAT))}</div><div class="s">${invoiced.length}건 · VAT 포함</div></div><div class="kpi good"><div class="l">입금 완료</div><div class="v">${krw(paid.length*PRICE*(1+VAT))}</div><div class="s">${paid.length}건 · VAT 포함</div></div></div>
   <div class="split"><div>
     <div class="sec-h"><h3>1. 할당</h3><span class="hint">고객이 접수한 리뷰를 작업자에게 배정합니다. 접수 단위로 전체 할당하거나 건별로 할당합니다.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">접수</th><th scope="col">현재</th><th scope="col">할당</th></tr></thead><tbody>${aRows}</tbody></table></div>
-    <div class="sec-h"><h3>2. 승인</h3><span class="hint">작업자가 삭제 완료를 보고한 건. 링크를 직접 확인하고 승인하면 결제 예정으로 넘어갑니다. 자동 확인 결과는 참고용입니다.</span></div>
-    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호 · 고객 · 작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">완료 보고</th><th scope="col">자동 확인</th><th scope="col">처리</th></tr></thead><tbody>${qRows}</tbody></table></div>
-    <div class="sec-h"><h3>3. 결제</h3><span class="hint">승인 건 × ${usd(FEE_USD)}. 파이버로 송금한 뒤 결제 완료를 누르면 배치 번호와 함께 이력에 남습니다.</span></div>
+    <div class="sec-h"><h3>2. 승인</h3><span class="hint">작업자가 삭제 완료를 보고한 건. 링크를 직접 확인하고 승인하면 결제 예정으로 넘어갑니다.</span></div>
+    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호 · 고객 · 작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자 · 내용</th><th scope="col">완료 보고</th><th scope="col">처리</th></tr></thead><tbody>${qRows}</tbody></table></div>
+    <div class="sec-h"><h3>3. 결제</h3><span class="hint">승인 건 × ${usd(FEE_USD)}. 송금한 뒤 결제 완료를 누르면 배치 번호와 함께 이력에 남습니다.</span></div>
     <div class="table-wrap"><table><thead><tr><th scope="col">작업자</th><th scope="col">결제 예정</th><th scope="col">금액</th><th scope="col">결제 완료 누적</th><th scope="col">처리</th></tr></thead><tbody>${wPayRows}</tbody></table></div>
     <div class="sec-h" style="margin-top:14px"><h3>결제 이력</h3><span class="hint">송금 기록. 배치 번호 · 건수 · 금액 · 메모 · 처리자</span></div>
     <div class="table-wrap"><table><thead><tr><th scope="col">일시</th><th scope="col">배치</th><th scope="col">작업자</th><th scope="col">건수</th><th scope="col">금액</th><th scope="col">메모 · 건</th><th scope="col">처리자</th></tr></thead><tbody>${histRows}</tbody></table></div>
@@ -937,17 +883,14 @@ function viewSettle(){
     <div class="sec-h"><h3>리뷰 링크 DB</h3><span class="hint">접수된 리뷰 전체. 복사 버튼은 현재 탭의 행을 엑셀용으로 복사합니다.</span><span style="margin-left:auto"><button class="btn btn-outlined btn-sm" data-action="copy-tsv"><span class="msym s18">content_copy</span>엑셀용 복사 (TSV)</button></span></div>
     <div class="tabs" style="margin-top:6px">${dbTabBtn('all','전체')}${dbTabBtn('requested','접수')}${dbTabBtn('progress','진행 중')}${dbTabBtn('done_claimed','승인 대기')}${dbTabBtn('pending','결제 예정')}${dbTabBtn('paid','결제 완료')}${dbTabBtn('rejected','삭제 불가')}</div>
     <div class="sheet-wrap"><table class="sheet" style="min-width:1200px"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호</th><th scope="col">고객</th><th scope="col">작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">작성자</th><th scope="col" style="min-width:180px">내용</th><th scope="col">상태</th><th scope="col">접수</th><th scope="col">승인</th><th scope="col">작업자 결제</th><th scope="col">고객 청구</th></tr></thead><tbody>${dbRows}</tbody></table></div>
-    <div class="sec-h"><h3>작업자 계정</h3><span class="hint">계정을 만들어 로그인 ID·비밀번호 또는 개인 링크를 전달합니다. 작업자가 처리한 건은 그 계정으로 기록됩니다.</span></div>
-    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col">작업자 · 로그인 ID</th><th scope="col">비밀번호</th><th scope="col" style="min-width:280px">개인 링크</th><th scope="col" class="num">진행 중</th><th scope="col" class="num">이달 승인</th><th scope="col" class="num">결제 예정</th><th scope="col"></th></tr></thead><tbody>${wRows}</tbody></table></div>
-    <form id="workerAdd" class="sheet-tools" style="margin-top:14px;align-items:flex-start"><div class="md-field" style="min-width:220px"><input id="wa-name" name="wname" placeholder=" "><label for="wa-name">표시 이름 (예: partner03)</label></div><div class="md-field" style="min-width:180px"><input id="wa-login" name="wlogin" placeholder=" "><label for="wa-login">로그인 ID</label></div><button class="btn btn-tonal" type="submit" style="height:56px"><span class="msym">person_add</span>계정 만들기</button></form>
-    <div class="sec-h"><h3>자동 확인 로그</h3><span class="hint">매일 09:00 cron · 승인 전 참고용. 마지막 실행 ${lastRun?fmtFull(lastRun.at):'없음'}</span></div>
-    <div class="table-wrap"><table><thead><tr><th scope="col">실행 시각</th><th scope="col">대상</th><th scope="col">삭제 확인됨</th><th scope="col">지도에 표시 중</th></tr></thead><tbody>${runRows}</tbody></table></div>
-  </div><aside class="side">
-    <div class="card pad"><div class="eyebrow">마스터 계정</div><div class="money" style="margin-top:8px"><div class="row"><span>계정</span><b>${esc(me)}</b></div><div class="row"><span>권한</span><b>할당 · 승인 · 반려 · 결제 · 청구</b></div><div class="row"><span>작업자 계정</span><b>${S.workers.length}개</b></div></div><p class="small muted" style="margin-top:10px">작업자는 자기에게 할당된 건만 봅니다. 할당·승인·결제는 마스터만 할 수 있고 모두 이력에 남습니다.</p></div>
+    <div class="sec-h"><h3>작업자 계정</h3><span class="hint">이름만 넣으면 개인 링크가 만들어집니다. 그 링크를 작업자에게 보내면 됩니다. 링크가 새면 재발급, 그만두면 비활성화.</span></div>
+    <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col">작업자</th><th scope="col" style="min-width:280px">개인 링크</th><th scope="col" class="num">진행 중</th><th scope="col" class="num">이달 승인</th><th scope="col" class="num">결제 예정</th><th scope="col"></th></tr></thead><tbody>${wRows}</tbody></table></div>
+    <form id="workerAdd" class="sheet-tools" style="margin-top:14px;align-items:flex-start"><div class="md-field" style="min-width:220px"><input id="wa-name" name="wname" placeholder=" "><label for="wa-name">작업자 이름 (예: partner03)</label></div><button class="btn btn-tonal" type="submit" style="height:56px"><span class="msym">person_add</span>개인 링크 만들기</button></form>
+      </div><aside class="side">
+    <div class="card pad"><div class="eyebrow">마스터 계정</div><div class="money" style="margin-top:8px"><div class="row"><span>계정</span><b>${esc(me)}</b></div><div class="row"><span>권한</span><b>할당 · 승인 · 반려 · 결제 · 청구</b></div><div class="row"><span>작업자 계정</span><b>${S.workers.length}개</b></div></div><p class="small muted" style="margin-top:10px">작업자는 자기에게 할당된 건만 보고 고객 정보는 보지 못합니다. 할당·승인·결제는 마스터만 할 수 있고 모두 이력에 남습니다. 데이터는 접수 시트에 저장됩니다.</p></div>
     <div class="card pad"><div class="eyebrow">정산 규칙</div><div class="money" style="margin-top:8px"><div class="row"><span>고객 단가</span><b>${krw(PRICE)} + VAT</b></div><div class="row"><span>작업자 단가</span><b>${usd(FEE_USD)} / 건</b></div><div class="row"><span>결제·청구 기준</span><b>마스터 승인</b></div><div class="row"><span>재게시 감시</span><b>완료 후 14일</b></div><div class="row total"><span>건당 마진 (환율 ${fx.toLocaleString()})</span><b>${krw(PRICE-FEE_USD*fx)}</b></div></div></div>
-    <div class="card pad"><div class="eyebrow">환율 USD/KRW</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span style="font-size:26px;font-weight:900;font-variant-numeric:tabular-nums">${fx.toLocaleString()}</span><span class="mini">${fxLabel}</span></div>${st.fxError&&st.fxSource!=='auto'?`<div class="mini" style="color:var(--warn);margin-top:4px">조회 실패 ${fmt(st.fxError)} · 이 화면에서는 외부 조회가 막혀 있을 수 있습니다</div>`:''}<div class="setting" style="margin-top:10px"><button class="btn btn-outlined btn-sm" data-action="fx-refresh"><span class="msym s18">refresh</span>지금 갱신</button><label>수동 <input type="number" data-action="fx" value="${fx}" min="900" max="2000" step="1"></label></div><p class="small muted" style="margin-top:8px">매일 09:00 자동 갱신(프로덕션 cron). 원화 환산 표시에만 쓰고 작업자 결제는 달러 고정.</p></div>
-    <div class="card pad"><div class="eyebrow">자동 확인 방식</div><p class="small" style="margin-top:8px;color:var(--ink-2)">매일 09:00 cron이 병원별 구글 리뷰 목록을 조회(DataForSEO)해 접수 시 저장한 작성자명·본문 앞부분과 대조합니다. 결과는 승인 대기 표에 "삭제 확인됨 / 지도에 표시 중"으로만 표시되고, 승인은 마스터가 직접 합니다.<br><br>이 프로토타입의 실행 버튼은 1회 조회 시뮬레이션입니다.</p></div>
-  </aside></div></div>`;
+    <div class="card pad"><div class="eyebrow">환율 USD/KRW</div><div style="display:flex;align-items:baseline;gap:8px;margin-top:6px"><span style="font-size:26px;font-weight:900;font-variant-numeric:tabular-nums">${fx.toLocaleString()}</span><span class="mini">${fxLabel}</span></div>${st.fxError&&st.fxSource!=='auto'?`<div class="mini" style="color:var(--warn);margin-top:4px">조회 실패 ${fmt(st.fxError)} · 이 화면에서는 외부 조회가 막혀 있을 수 있습니다</div>`:''}<div class="setting" style="margin-top:10px"><button class="btn btn-outlined btn-sm" data-action="fx-refresh"><span class="msym s18">refresh</span>지금 갱신</button><label>수동 <input type="number" data-action="fx" value="${fx}" min="900" max="2000" step="1"></label></div><p class="small muted" style="margin-top:8px">마스터 화면을 열 때 하루 한 번 자동 갱신. 원화 환산 표시에만 쓰고 작업자 결제는 달러 고정.</p></div>
+      </aside></div></div>`;
 }
 function copyTsv(){const g=dbGroups();const list=(g[UI.dbTab]||g.all).slice().sort((a,b)=>a.createdAt<b.createdAt?1:-1);const H=['접수번호','고객','작업자','리뷰 링크','작성자','내용','상태','접수','승인','작업자 결제','고객 청구'];const lines=[H.join('\t')];list.forEach(it=>{const o=orderOf(it);lines.push([it.orderId,o?o.business:'',workerName(it.workerId),it.url,it.author,it.snippet,KO[it.status],fmtFull(it.createdAt),it.approvedAt?fmtFull(it.approvedAt):'',it.status!=='approved'?'':(it.payout.status==='paid'?'결제 완료 '+it.payout.batch:'결제 예정'),it.status!=='approved'?'':BILL_KO[it.billing.status]].map(tsvCell).join('\t'))});const text=lines.join('\n');const done=()=>toast('엑셀에 붙여넣을 수 있게 복사했습니다 · '+(lines.length-1)+'행');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,()=>fallbackCopy(text,done));else fallbackCopy(text,done)}
 function fallbackCopy(text,done){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){toast('복사에 실패했습니다')}document.body.removeChild(ta)}
@@ -957,36 +900,39 @@ let currentView='';
 const dec=s=>{try{return decodeURIComponent(s)}catch(e){return s}};
 const ANCH=['order-form','status-lookup','risk'];
 const parseHash=()=>{const h=location.hash||'#/order';const p=h.replace(/^#\/?/,'').split('/');const landing=(p[0]==='order'&&!p[1])||ANCH.includes(p[0])||p[0]==='';return {p,landing,anchor:ANCH.includes(p[0])?p[0]:null}};
-function render(){
-  const {p,landing,anchor}=parseHash();const app=document.getElementById('app');
-  let key='order',html='',view='';
-  if(p[0]==='w'&&p[1]){const w=S.workers.find(x=>x.token===dec(p[1]));if(w){sess.set('rr_worker',w.id);location.hash='#/worker';return}key='worker';view='worker';html=viewWorkerLogin('This link is not valid. Ask the admin for a new one.')}
-  else if(p[0]==='worker'){key='worker';view='worker';html=viewWorker()}
-  else if(p[0]==='settle'){key='settle';view='settle';html=viewSettle();if(isAdmin())fxRefresh(false)}
-  else if(p[0]==='status'){view='status';html=viewStatus(dec(p[1]||''))}
+let renderSeq=0;
+async function render(refetch){
+  const seq=++renderSeq;const {p,landing,anchor}=parseHash();const app=document.getElementById('app');
+  let html='',view='';
+  if(p[0]==='w'&&p[1]){tokens.set('rr_wt',dec(p[1]));tokens.del('rr_mt');ROLE=null;location.hash='#/worker';return}
+  if(p[0]==='m'&&p[1]){tokens.set('rr_mt',dec(p[1]));tokens.del('rr_wt');ROLE=null;location.hash='#/settle';return}
+  if(p[0]==='worker'||p[0]==='settle'){view=p[0];
+    if(!ROLE||refetch){app.innerHTML=viewLoading();const ok=await loadState();if(seq!==renderSeq)return;
+      if(!ok){const net=LOAD_ERR==='network';html=p[0]==='worker'?viewWorkerNoAccess(LOAD_ERR==='no_token'?'':(net?'Could not reach the server. Try again in a moment.':'This link is not valid. Ask the admin for a new one.')):viewAdminNoAccess(LOAD_ERR==='no_token'?'':(net?'서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.':'링크가 유효하지 않습니다.'))}}
+    if(!html){if(p[0]==='worker')html=ROLE==='worker'?viewWorker():viewWorkerNoAccess('This link opens the admin page, not a worker queue.');else html=ROLE==='master'?viewSettle():viewAdminNoAccess('이 링크는 작업자용입니다.')}}
+  else if(p[0]==='status'){view='status';app.innerHTML=viewLoading();html=await renderStatus(dec(p[1]||'').toUpperCase());if(seq!==renderSeq)return}
   else if(p[0]==='order'&&p[1]==='done'){view='done';html=viewDone(dec(p[2]||''))}
   else{view='landing';html=viewOrder()}
   app.innerHTML=html;if(view!==currentView&&view!=='landing')track('view_'+view);currentView=view;
-  const pb=document.getElementById('protobar');if(pb){pb.hidden=!(key==='worker'||key==='settle');pbh()}
-  document.querySelectorAll('#protobar nav a').forEach(a=>a.classList.toggle('on',a.dataset.nav===key));
+  if(view==='settle'&&isAdmin())fxRefresh(false);
   if(landing){mountOrderForm();const el=anchor?document.getElementById(anchor):null;if(el)el.scrollIntoView();else window.scrollTo(0,0);const q=new URLSearchParams(location.search).get('link');if(q){const inp=document.getElementById('f-link');if(inp){inp.value=q;history.replaceState(null,'',location.pathname+'#order-form');barGo();inp.closest('form').scrollIntoView()}}}
   else window.scrollTo(0,0);
 }
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,id=b.dataset.id;
   const selVal=key=>{const s=document.querySelector('select[data-assign="'+key+'"]');return s?s.value:null};
-  if(a==='reset')reset();
-  else if(a==='bar-go')barGo();
+  if(a==='bar-go')barGo();
+  else if(a==='refresh')render(true);
   else if(a==='ack')ack(id);else if(a==='claim')claim(id);else if(a==='reject')reject(id);
   else if(a==='assign')assign(id,selVal(id));else if(a==='assign-order')assignOrder(b.dataset.oid,selVal('o:'+b.dataset.oid));
-  else if(a==='approve')approve(id);else if(a==='return')returnItem(id);else if(a==='pay-worker')markPaidWorker(id);else if(a==='check-auto')checkAuto();
+  else if(a==='approve')approve(id);else if(a==='return')returnItem(id);else if(a==='pay-worker')markPaidWorker(id);
   else if(a==='wtab'){UI.workerTab=b.dataset.tab;render()}
   else if(a==='dbtab'){UI.dbTab=b.dataset.tab;render()}
   else if(a==='invoice')invoiceOrder(b.dataset.oid);else if(a==='paid')paidOrder(b.dataset.oid);
   else if(a==='copy-tsv')copyTsv();
-  else if(a==='w-reset')resetWorkerPw(id);
-  else if(a==='worker-logout'){sess.del('rr_worker');render()}
-  else if(a==='admin-logout'){sess.del('rr_admin');render()}
+  else if(a==='w-token')resetToken(id);else if(a==='w-active')setWorkerActive(id,b.dataset.active==='1');
+  else if(a==='worker-logout'){tokens.del('rr_wt');ROLE=null;render()}
+  else if(a==='admin-logout'){tokens.del('rr_mt');ROLE=null;render()}
   else if(a==='fx-refresh'){b.disabled=true;b.textContent='갱신 중…';fxRefresh(true)}
   else if(a==='add-row'){addRows([{}]);const rows=document.querySelectorAll('#sheetBody tr');rows[rows.length-1].querySelector('input').focus()}
   else if(a==='rm-row'){const tb=document.getElementById('sheetBody');if(tb.querySelectorAll('tr').length>1)b.closest('tr').remove();else b.closest('tr').querySelectorAll('input').forEach(i=>i.value='');renumber()}
@@ -1002,18 +948,15 @@ document.addEventListener('input',e=>{const t=e.target;if(t&&t.name==='url'&&t.c
 document.addEventListener('submit',e=>{
   if(e.target.id==='orderForm'){e.preventDefault();submitOrder(e.target)}
   else if(e.target.id==='lookupForm'){e.preventDefault();const v=e.target.elements.oid.value.trim().toUpperCase();if(v){track('status_lookup');location.hash='#/status/'+encodeURIComponent(v)}}
-  else if(e.target.id==='workerLogin'){e.preventDefault();const f=e.target.elements;const w=S.workers.find(x=>x.login===f.login.value.trim().toLowerCase()&&x.pw===f.pw.value);if(!w){document.getElementById('app').innerHTML=viewWorkerLogin('Login ID or password is wrong.');return}sess.set('rr_worker',w.id);toast('Signed in · '+w.name);render()}
-  else if(e.target.id==='adminLogin'){e.preventDefault();const f=e.target.elements;if(f.pw.value!==(S.settings.adminPw||'admin1234')){document.getElementById('app').innerHTML=viewAdminLogin('비밀번호가 맞지 않습니다.');return}sess.set('rr_admin','1');render()}
-  else if(e.target.id==='workerAdd'){e.preventDefault();const f=e.target.elements;addWorker(f.wname.value,f.wlogin.value)}
+  else if(e.target.id==='workerAdd'){e.preventDefault();addWorker(e.target.elements.wname.value)}
 });
 document.addEventListener('change',e=>{if(e.target.name==='agree'&&e.target.checked){const a=document.getElementById('agreeErr');if(a)a.style.display='none'}
-  if(e.target.dataset.action==='fx'){const v=Number(e.target.value);if(v>=900&&v<=2000){S.settings.fx=v;S.settings.fxSource='manual';S.settings.fxUpdatedAt=iso(new Date());save();render()}}});
+  if(e.target.dataset.action==='fx'){const v=Number(e.target.value);if(v>=900&&v<=2000)act({a:'fx',value:v,source:'manual'})}});
 window.addEventListener('hashchange',()=>{const {landing,anchor}=parseHash();if(landing&&currentView==='landing'){const el=anchor?document.getElementById(anchor):null;if(el)el.scrollIntoView();else window.scrollTo({top:0,behavior:'smooth'});return}render()});
-function pbh(){const el=document.getElementById('protobar');if(el)document.documentElement.style.setProperty('--pb-h',el.offsetHeight+'px')}
-const pbNote=document.querySelector('#protobar > span:not(.tag)');if(pbNote)pbNote.textContent=ymd()+' 기준 · 세 화면은 실제 서비스에서 별도 URL과 계정으로 분리됩니다. 데이터는 이 브라우저에만 저장. 표시 시각 KST.';
-window.addEventListener('resize',pbh);pbh();
 render();
 })();
+
+</script>})();
 
 </script>
 </body>
