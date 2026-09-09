@@ -584,8 +584,8 @@ const isAdmin=()=>ROLE==='master';
 const adminName=()=>S.settings.adminName||MASTER;
 function assign(id,wid){if(!isAdmin()||!wid)return;act({a:'assign',id,wid})}
 function assignOrder(oid,wid){if(!isAdmin()||!wid)return;act({a:'assignOrder',oid,wid})}
-function ack(id){if(!curWorker())return;act({a:'ack',id})}
-function claim(id){if(!curWorker())return;act({a:'claim',id})}
+function ack(id){if(!curWorker())return;UI.workerTab='progress';act({a:'ack',id})}
+function claim(id){if(!curWorker())return;UI.workerTab='reported';act({a:'claim',id})}
 function reject(id){if(!curWorker())return;let r=window.prompt('Reason (shown to the client). Example: genuine customer complaint, not eligible under Google policy.','');if(r===null)return;r=r.trim();if(!r){toast('A reason is required');return}act({a:'reject',id,reason:r})}
 function approve(id){if(!isAdmin())return;act({a:'approve',id})}
 function returnItem(id){if(!isAdmin())return;let r=window.prompt('반려 사유 (작업자에게 표시됩니다)','지도에 리뷰가 표시됩니다. 다시 진행해 주세요.');if(r===null)return;act({a:'return',id,note:r.trim()})}
