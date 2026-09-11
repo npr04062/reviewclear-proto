@@ -167,6 +167,7 @@ p{margin:0}
 .pill.not_removed{background:var(--md-primary-container);color:var(--md-on-primary-container)}
 .pill.verified{background:var(--md-tertiary-container);color:var(--md-on-tertiary-container)}
 .pill.rejected{background:transparent;color:var(--md-on-surface-variant);border-color:var(--md-outline-variant)}
+.pill.cancelled{background:transparent;color:var(--md-on-surface-variant);border-color:var(--md-outline-variant);opacity:.75}
 .pill.neutral{background:var(--md-surface-container-high);color:var(--md-on-surface-variant)}
 .pill.pink{background:var(--md-primary-container);color:var(--md-on-primary-container)}
 .chk{display:inline-block;font-size:12px;padding:2px 8px;border-radius:8px;border:1px solid var(--md-outline-variant);color:var(--md-on-surface-variant);margin-right:4px}
@@ -486,7 +487,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
   <div class="eyebrow">진행</div><h2>혼자 싸우지 마세요.</h2>
   <p class="lead">접수부터 청구까지 네 단계로 진행합니다.</p>
   <div class="steps">
-    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 붙여넣고 담당자와 휴대폰만 적으세요. 여러 건도 한 번에 접수할 수 있습니다.</p><span class="w">1분</span></div>
+    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 붙여넣고 담당자와 휴대폰만 적으세요. 접수 후 카카오톡 채널로 사업자등록증과 이메일 주소를 보내주시면 접수가 완료됩니다.</p><span class="w">1분</span></div>
     <div class="step"><div class="ic"><span class="msym">mark_email_read</span></div><div class="n">02</div><h4>회신</h4><p>삭제 가능 여부를 24시간 안에 알려드립니다.</p><span class="w">24시간</span></div>
     <div class="step"><div class="ic"><span class="msym">delete_sweep</span></div><div class="n">03</div><h4>삭제</h4><p>사진이 있거나 오래된 리뷰도 진행합니다.</p><span class="w">평균 2주</span></div>
     <div class="step"><div class="ic"><span class="msym">receipt_long</span></div><div class="n">04</div><h4>청구</h4><p>삭제를 확인한 건만 청구서를 보내드립니다. 국민은행 079801-04-194872(주식회사 스트라디지)로 입금하시면 됩니다.</p><span class="w">당일</span></div>
@@ -505,6 +506,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 <section class="section" style="padding-top:20px"><div class="wrap-n faq">
   <div class="eyebrow">FAQ</div><h2 style="margin-bottom:16px">궁금한 점</h2>
   <details><summary>어떤 리뷰를 지울 수 있나요?</summary><p>내원 이력이 없는 계정이 남긴 비방이나 별점 테러, 허위 부작용 리뷰가 주 대상입니다. 실제 환자의 불만은 삭제가 어려울 수 있습니다. 이 경우 24시간 안에 알려드립니다.</p></details>
+  <details><summary>사업자등록증은 왜 필요한가요?</summary><p>세금계산서 발행과 접수 업체 확인에 필요합니다. 접수 후 카카오톡 채널로 사업자등록증과 이메일 주소를 보내주시면 접수가 완료되고, 진행 상황 조회 링크를 이메일로 보내드립니다.</p></details>
   <details><summary>얼마나 걸리나요?</summary><p>평균 2주, 길면 4주입니다.</p></details>
   <details><summary>리뷰 링크는 어떻게 얻나요?</summary><p>구글 지도에서 리뷰 옆 더보기 메뉴를 열고 '리뷰 공유'를 누르면 링크가 복사됩니다. 어려우면 카카오톡 채널로 문의하세요.</p></details>
   <details><summary>외국어 리뷰도 되나요?</summary><p>네. 해외 계정이 쓴 리뷰도 주요 대상입니다.</p></details>
@@ -527,6 +529,7 @@ tr.grp td{background:var(--md-surface-container-low)!important;padding:10px 12px
 (function(){
 'use strict';
 const PRICE=250000, VAT=0.1, FEE_USD=15;
+const KAKAO='https://pf.kakao.com/_Dxidin/chat';/* 스트라디지 카카오톡 채널. 접수 완료 조건 = 이 채널로 사업자등록증 + 이메일 수신 */
 const BRAND='리뷰지우개';
 const ATTRIB=(window.rcAttrib&&window.rcAttrib())||{};
 const track=(n,p)=>{try{window.rcTrack&&window.rcTrack(n,p)}catch(e){}};
@@ -547,9 +550,9 @@ function fmtFull(s){if(!s)return '';const k=kst(s);return k.y+'-'+k.m+'-'+k.d+' 
 const krw=n=>'₩'+Math.round(n).toLocaleString('ko-KR');
 const usd=n=>'$'+Number(n).toLocaleString('en-US');
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const KO={requested:'접수 · 할당 대기',assigned:'할당됨 · 확인 대기',accepted:'작업 중',done_claimed:'승인 대기',approved:'삭제 완료',rejected:'삭제 실패'};
-const KO_C={requested:'접수',assigned:'작업 중',accepted:'작업 중',done_claimed:'삭제 확인 중',approved:'삭제 완료',rejected:'삭제 실패'};
-const EN={requested:'Unassigned',assigned:'New · assigned to you',accepted:'In progress',done_claimed:'Reported · awaiting approval',approved:'Approved',rejected:'Not removable'};
+const KO={requested:'접수 · 할당 대기',assigned:'할당됨 · 확인 대기',accepted:'작업 중',done_claimed:'승인 대기',approved:'삭제 완료',rejected:'삭제 실패',cancelled:'취소'};
+const KO_C={requested:'접수',assigned:'작업 중',accepted:'작업 중',done_claimed:'삭제 확인 중',approved:'삭제 완료',rejected:'삭제 실패',cancelled:'접수 취소'};
+const EN={requested:'Unassigned',assigned:'New · assigned to you',accepted:'In progress',done_claimed:'Reported · awaiting approval',approved:'Approved',rejected:'Not removable',cancelled:'Cancelled'};
 const BILL_KO={unbilled:'청구 예정',invoiced:'청구됨 · 입금 대기',paid:'입금 완료'};
 const PAY_KO={pending:'결제 예정',paid:'결제 완료'};
 const MASTER='마스터';
@@ -568,7 +571,7 @@ async function apiGet(params){const r=await fetch(API+'?'+new URLSearchParams(pa
 async function apiPost(body){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(body)});return r.json()}
 function applyState(st){S.orders=st.orders||[];S.items=st.items||[];S.workers=st.workers||[];S.payments=st.payments||[];S.settings=Object.assign({fx:1380},st.settings||{});ROLE=st.role||null;ME=st.worker||null}
 async function loadState(){const t=myToken();ROLE=null;ME=null;if(!t){LOAD_ERR='no_token';return false}LOAD_ERR='';try{const st=await apiGet({a:'state',t});if(!st.ok){LOAD_ERR=st.error||'error';return false}applyState(st);return true}catch(e){LOAD_ERR='network';return false}}
-const ERR={unauthorized:'링크가 유효하지 않습니다',forbidden:'권한이 없습니다',bad_state:'지금 상태에서는 처리할 수 없습니다',nothing_to_assign:'할당할 건이 없습니다',nothing_to_pay:'결제 예정 건이 없습니다',nothing_to_bill:'처리할 건이 없습니다',reason_required:'사유를 입력하세요',name_required:'이름을 입력하세요',duplicate_name:'이미 있는 이름입니다',no_worker:'작업자를 찾을 수 없습니다',bad_fx:'환율 범위(900~2000)가 아닙니다'};
+const ERR={unauthorized:'링크가 유효하지 않습니다',forbidden:'권한이 없습니다',bad_state:'지금 상태에서는 처리할 수 없습니다',nothing_to_assign:'할당할 건이 없습니다',nothing_to_pay:'결제 예정 건이 없습니다',nothing_to_bill:'처리할 건이 없습니다',reason_required:'사유를 입력하세요',name_required:'이름을 입력하세요',duplicate_name:'이미 있는 이름입니다',no_worker:'작업자를 찾을 수 없습니다',bad_fx:'환율 범위(900~2000)가 아닙니다',docs_required:'사업자등록증·이메일 확인 전입니다. 접수 줄의 "서류 확인"을 먼저 누르세요',order_cancelled:'취소된 접수입니다',has_work:'삭제 보고·승인된 건이 있어 취소할 수 없습니다',bad_email:'이메일 형식이 아닙니다',bad_order:'접수를 찾을 수 없습니다'};
 const errText=e=>ERR[e]||('처리 실패: '+e);
 let busy=false;
 async function act(body){const t=myToken();if(!t||busy)return;busy=true;document.body.classList.add('busy');try{const st=await apiPost(Object.assign({t},body));if(!st.ok){toast(errText(st.error));return}applyState(st);render()}catch(e){toast('서버 연결 실패. 다시 시도해 주세요.')}finally{busy=false;document.body.classList.remove('busy')}}
@@ -587,6 +590,9 @@ const isAdmin=()=>ROLE==='master';
 const adminName=()=>S.settings.adminName||MASTER;
 function assign(id,wid){if(!isAdmin())return;if(!wid){toast('활성 작업자가 없습니다. 아래 작업자 계정에서 먼저 만드세요');return}const it=byId(id);if(it&&it.workerId===wid&&it.status!=='requested'){toast('이미 '+workerName(wid)+'에게 할당된 건입니다. 다른 작업자를 고르세요');return}act({a:'assign',id,wid})}
 function assignOrder(oid,wid){if(!isAdmin())return;if(!wid){toast('활성 작업자가 없습니다. 아래 작업자 계정에서 먼저 만드세요');return}act({a:'assignOrder',oid,wid})}
+function confirmDocs(oid){if(!isAdmin())return;const o=S.orders.find(x=>x.id===oid);if(!o)return;let em=window.prompt('카카오톡 채널로 사업자등록증과 이메일 주소를 받았는지 확인한 뒤, 고객 이메일 주소를 입력하세요.\n확인하면 접수 완료로 바뀌고 고객에게 조회 링크가 이메일로 갑니다. 회신 기한은 지금부터 24시간입니다.',o.email||'');if(em===null)return;em=em.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){toast('이메일 형식이 아닙니다');return}act({a:'confirmDocs',oid,email:em})}
+function cancelOrder(oid){if(!isAdmin())return;let r=window.prompt('접수를 취소합니다. 사유(선택, 시트 메모에 남습니다):','');if(r===null)return;if(!window.confirm('이 접수의 리뷰 건이 모두 취소 처리됩니다. 계속할까요?'))return;act({a:'cancelOrder',oid,reason:r.trim()})}
+function copyText(t){const done=()=>toast('복사했습니다');if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>fallbackCopy(t,done));else fallbackCopy(t,done)}
 function reopenItem(id){if(!isAdmin())return;if(!window.confirm('이 건을 회수해 다시 할당 대기로 되돌립니다. 작업자의 판정·배정이 지워집니다.'))return;act({a:'reopen',id})}
 function ack(id){if(!curWorker())return;UI.workerTab='progress';act({a:'ack',id})}
 function claim(id){if(!curWorker())return;UI.workerTab='reported';act({a:'claim',id})}
@@ -688,7 +694,7 @@ function viewOrder(){
   <div class="eyebrow">진행</div><h2>혼자 싸우지 마세요.</h2>
   <p class="lead">접수부터 청구까지 네 단계로 진행합니다.</p>
   <div class="steps">
-    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 붙여넣고 담당자와 휴대폰만 적으세요. 여러 건도 한 번에 접수할 수 있습니다.</p><span class="w">1분</span></div>
+    <div class="step"><div class="ic"><span class="msym">upload_file</span></div><div class="n">01</div><h4>접수</h4><p>리뷰 링크를 붙여넣고 담당자와 휴대폰만 적으세요. 접수 후 카카오톡 채널로 사업자등록증과 이메일 주소를 보내주시면 접수가 완료됩니다.</p><span class="w">1분</span></div>
     <div class="step"><div class="ic"><span class="msym">mark_email_read</span></div><div class="n">02</div><h4>회신</h4><p>삭제 가능 여부를 24시간 안에 알려드립니다.</p><span class="w">24시간</span></div>
     <div class="step"><div class="ic"><span class="msym">delete_sweep</span></div><div class="n">03</div><h4>삭제</h4><p>사진이 있거나 오래된 리뷰도 진행합니다.</p><span class="w">평균 2주</span></div>
     <div class="step"><div class="ic"><span class="msym">receipt_long</span></div><div class="n">04</div><h4>청구</h4><p>삭제를 확인한 건만 청구서를 보내드립니다. 국민은행 079801-04-194872(주식회사 스트라디지)로 입금하시면 됩니다.</p><span class="w">당일</span></div>
@@ -707,6 +713,7 @@ function viewOrder(){
 <section class="section" style="padding-top:20px"><div class="wrap-n faq">
   <div class="eyebrow">FAQ</div><h2 style="margin-bottom:16px">궁금한 점</h2>
   <details><summary>어떤 리뷰를 지울 수 있나요?</summary><p>내원 이력이 없는 계정이 남긴 비방이나 별점 테러, 허위 부작용 리뷰가 주 대상입니다. 실제 환자의 불만은 삭제가 어려울 수 있습니다. 이 경우 24시간 안에 알려드립니다.</p></details>
+  <details><summary>사업자등록증은 왜 필요한가요?</summary><p>세금계산서 발행과 접수 업체 확인에 필요합니다. 접수 후 카카오톡 채널로 사업자등록증과 이메일 주소를 보내주시면 접수가 완료되고, 진행 상황 조회 링크를 이메일로 보내드립니다.</p></details>
   <details><summary>얼마나 걸리나요?</summary><p>평균 2주, 길면 4주입니다.</p></details>
   <details><summary>리뷰 링크는 어떻게 얻나요?</summary><p>구글 지도에서 리뷰 옆 더보기 메뉴를 열고 '리뷰 공유'를 누르면 링크가 복사됩니다. 어려우면 카카오톡 채널로 문의하세요.</p></details>
   <details><summary>외국어 리뷰도 되나요?</summary><p>네. 해외 계정이 쓴 리뷰도 주요 대상입니다.</p></details>
@@ -762,15 +769,16 @@ function submitOrder(form){
 /* ---------- view: done ---------- */
 function viewDone(id){let o=null;try{o=JSON.parse(tokens.get('rr_last_order')||'null')}catch(e){}if(!o||o.id!==id)o={id,name:'',count:0,key:''};
   return topbar('구글 리뷰 삭제')+`<div class="done">
-  <div class="eyebrow">접수 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${o.name?esc(o.name)+' 담당자님, ':''}리뷰${o.count?' '+o.count+'건':''}를 접수했습니다.</h2>
+  <div class="eyebrow">접수 신청 완료</div><h2 style="font-family:var(--serif);font-size:28px;margin-top:8px">${o.name?esc(o.name)+' 담당자님, ':''}리뷰${o.count?' '+o.count+'건':''}를 접수했습니다.</h2>
   <div class="idbox"><div class="small muted">접수번호</div><div class="id">${esc(o.id)}</div><div class="small muted" style="margin-top:8px">조회 링크</div><div class="linkbox"><input readonly value="${esc(statusUrl(o.id,o.key))}" id="statusLink"><button class="btn btn-outlined btn-sm" type="button" data-action="copy" data-target="statusLink">복사</button></div></div>
-  <p class="next-line">24시간 안에 가능 여부를 알려드리고, 삭제가 확인된 뒤에만 청구서를 보냅니다. 입금은 국민은행 079801-04-194872(주식회사 스트라디지)로 하시면 됩니다.</p>
+  <div class="card pad" style="margin-top:16px;border:2px solid var(--md-primary);text-align:left"><div class="eyebrow">다음 단계 · 접수 완료 조건</div><p style="margin-top:6px">카카오톡 채널로 아래 두 가지를 보내주시면 접수가 완료됩니다.</p><ol style="margin:10px 0 0;padding-left:20px;display:grid;gap:6px"><li><b>사업자등록증</b> (사진 또는 PDF)</li><li><b>이메일 주소</b> (조회 링크와 청구서를 받을 주소)</li></ol><p class="small muted" style="margin-top:8px">접수번호 <span class="mono">${esc(o.id)}</span>를 함께 적어 주세요.</p><div style="margin-top:12px"><a class="btn btn-filled" href="${KAKAO}" target="_blank" rel="noopener" onclick="try{window.rcTrack&&rcTrack('kakao_click',{place:'done'})}catch(e){}">카카오톡 채널로 보내기</a></div></div>
+  <p class="next-line">서류가 확인되면 24시간 안에 가능 여부를 알려드리고, 삭제가 확인된 뒤에만 청구서를 보냅니다. 입금은 국민은행 079801-04-194872(주식회사 스트라디지)로 하시면 됩니다.</p>
   <div style="margin-top:22px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn btn-tonal" href="#/status/${esc(o.id)}${o.key?'/'+esc(o.key):''}">접수 현황</a><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 function viewNotFound(){return topbar('구글 리뷰 삭제')+`<div class="done"><h2>접수번호를 찾을 수 없습니다.</h2><p class="muted" style="margin-top:8px">형식은 RR-YYMMDD-000입니다. 접수 때 받은 조회 링크를 확인해 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}
 
 /* ---------- view: status (customer) ---------- */
 async function renderStatus(id,key){if(!id)return viewNotFound();if(!key)return topbar('구글 리뷰 삭제')+`<div class="done"><h2>조회 링크가 필요합니다.</h2><p class="muted" style="margin-top:8px">접수 완료 화면과 안내 메일에 있는 조회 링크(접수번호 뒤에 조회키가 붙은 주소)로 열어 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`;try{const r=await apiGet({a:'status',id,k:key});if(!r.ok)return viewNotFound();return viewStatus(r)}catch(e){return topbar('구글 리뷰 삭제')+`<div class="done"><h2>서버에 연결하지 못했습니다.</h2><p class="muted" style="margin-top:8px">잠시 후 다시 시도해 주세요.</p><div style="margin-top:18px"><a class="btn btn-outlined" href="#/order">처음으로</a></div></div>`}}
-function viewStatus(r){const o=r.order,its=r.items||[];
+function viewStatus(r){const o=r.order,its=r.items||[];const docs=o.status==='서류 대기',cancelled=o.status==='취소';
   const done=its.filter(i=>i.status==='approved');const unb=done.filter(i=>i.billing.status==='unbilled').length,inv=done.filter(i=>i.billing.status==='invoiced').length,pd=done.filter(i=>i.billing.status==='paid').length;
   const rows=its.map(it=>{let note='';
     if(it.status==='approved')note=`삭제 완료 ${fmtFull(it.approvedAt)} · ${BILL_KO[it.billing.status]||''}`;
@@ -778,12 +786,14 @@ function viewStatus(r){const o=r.order,its=r.items||[];
     else if(it.status==='rejected')note=`${esc(it.rejectedReason)} · 0원`;
     else if(it.status==='accepted')note=`작업 중 (${fmtFull(it.acceptedAt)} 시작)`;
     else if(it.status==='assigned')note='작업 중';
-    else note='가능 여부 확인 중 (24시간 안에)';
+    else if(it.status==='cancelled')note='접수 취소 · 0원';
+    else note=docs?'서류 확인 후 진행':'가능 여부 확인 중 (24시간 안에)';
     return `<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}</td><td class="c">${pillKoC(it.status)}</td><td class="c">${note}</td><td class="c num">${it.status==='approved'?krw(PRICE):'<span class="muted">0</span>'}</td></tr>`}).join('');
   const evs=[];its.forEach(it=>(it.events||[]).forEach(e=>evs.push({at:e.at,text:'#'+itemNo(it)+' '+e.text})));evs.sort((a,b)=>a.at<b.at?1:-1);
   return topbar('구글 리뷰 삭제',`<span>접수 현황</span>`)+`<div class="wrap" style="padding-top:36px;padding-bottom:60px">
   <div class="eyebrow">접수 현황</div><h2 style="font-size:26px;margin-top:6px">접수번호 <span class="mono">${esc(o.id)}</span></h2>
   <p class="muted small" style="margin-top:4px">접수 ${fmtFull(o.createdAt)} · 리뷰 ${its.length}건</p>
+  ${docs?`<div class="note warn" style="margin-top:14px"><b>접수가 아직 완료되지 않았습니다.</b> 카카오톡 채널로 ① 사업자등록증 ② 이메일 주소를 접수번호와 함께 보내주세요. 확인되면 접수 완료로 바뀌고 이메일로 안내드립니다.<div style="margin-top:10px"><a class="btn btn-filled btn-sm" href="${KAKAO}" target="_blank" rel="noopener" onclick="try{window.rcTrack&&rcTrack('kakao_click',{place:'status'})}catch(e){}">카카오톡 채널 열기</a></div></div>`:''}${cancelled?`<div class="note" style="margin-top:14px">취소된 접수입니다. 다시 진행하려면 새로 접수해 주세요.</div>`:''}
   <div class="kpis"><div class="kpi"><div class="l">접수</div><div class="v">${its.length}</div><div class="s">건</div></div><div class="kpi good"><div class="l">삭제 완료</div><div class="v">${done.length}</div><div class="s">건 · 청구 대상</div></div><div class="kpi"><div class="l">진행 중</div><div class="v">${its.filter(i=>i.status==='assigned'||i.status==='accepted'||i.status==='done_claimed').length}</div><div class="s">건 · 비용 없음</div></div><div class="kpi pink"><div class="l">청구 금액</div><div class="v">${krw(done.length*PRICE)}</div><div class="s">VAT 별도 · 청구 예정 ${unb} · 입금 대기 ${inv} · 입금 완료 ${pd}</div></div></div>
   <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:260px">리뷰 링크</th><th scope="col">상태</th><th scope="col" style="min-width:220px">진행</th><th scope="col" class="num">청구 (VAT 별도)</th></tr></thead><tbody>${rows}</tbody></table></div>
   <div class="sec-h"><h3>진행 이력</h3></div>
@@ -808,6 +818,7 @@ function viewWorker(){
     else if(it.status==='done_claimed')act=`<span class="mini">Awaiting admin approval</span>`;
     else if(it.status==='approved')act=`<span class="small ${it.payout.status==='paid'?'muted':''}">${usd(FEE_USD)} ${it.payout.status==='paid'?'paid · '+esc(it.payout.batch)+' · '+fmt(it.payout.paidAt):'payable'}</span>`;
     else if(it.status==='rejected')act=`<span class="mini">No charge</span>`;
+    else if(it.status==='cancelled')act=`<span class="mini">Cancelled by admin</span>`;
     return `<tr><td class="c"><div class="mono">${esc(it.id)}</div><div class="sub">${esc(o?o.business:'')}</div></td>
       <td class="c">${linkA(it.url)}</td>
       <td class="c num">${fmt(it.assignedAt||it.createdAt)}</td>
@@ -829,7 +840,7 @@ function viewWorker(){
 
 /* ---------- view: admin login + settlement (KO) ---------- */
 function viewAdminNoAccess(msg){return topbar('마스터 관리자')+`<div class="done" style="max-width:460px"><div class="card pad"><div class="eyebrow">마스터 관리자</div><h2 style="font-size:22px;margin-top:6px">개인 링크로 접속하세요</h2><p class="muted small" style="margin-top:4px">비밀번호는 없습니다. 접수 시트의 설정 탭에 있는 master_link로 들어오면 됩니다. 링크가 새면 그 탭의 master_token 값을 바꾸세요.</p>${msg?`<div class="note warn" style="margin-top:12px">${esc(msg)}</div>`:''}</div></div>`}
-function dbGroups(){return {all:S.items,requested:S.items.filter(i=>i.status==='requested'),progress:S.items.filter(i=>i.status==='assigned'||i.status==='accepted'),done_claimed:S.items.filter(i=>i.status==='done_claimed'),pending:S.items.filter(i=>i.status==='approved'&&i.payout.status==='pending'),paid:S.items.filter(i=>i.status==='approved'&&i.payout.status==='paid'),rejected:S.items.filter(i=>i.status==='rejected')}}
+function dbGroups(){return {all:S.items,requested:S.items.filter(i=>i.status==='requested'),progress:S.items.filter(i=>i.status==='assigned'||i.status==='accepted'),done_claimed:S.items.filter(i=>i.status==='done_claimed'),pending:S.items.filter(i=>i.status==='approved'&&i.payout.status==='pending'),paid:S.items.filter(i=>i.status==='approved'&&i.payout.status==='paid'),rejected:S.items.filter(i=>i.status==='rejected'),cancelled:S.items.filter(i=>i.status==='cancelled')}}
 const tsvCell=v=>{v=String(v==null?'':v).replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(v)?"'"+v:v};
 const workerLoad=w=>S.items.filter(i=>i.workerId===w.id&&(i.status==='assigned'||i.status==='accepted'||i.status==='done_claimed')).length;
 const workerSelect=(key,sel)=>{const ws=S.workers.filter(w=>w.active);return `<select class="assign" data-assign="${esc(key)}" aria-label="작업자 선택">${ws.length?ws.map(w=>`<option value="${esc(w.id)}" ${sel===w.id?'selected':''}>${esc(w.name)} (진행 ${workerLoad(w)})</option>`).join(''):'<option value="">활성 작업자 없음</option>'}</select>`};
@@ -846,8 +857,9 @@ function viewSettle(){
   /* 할당 */
   const aOrders=S.orders.filter(o=>toAssign.some(i=>i.orderId===o.id)).sort((a,b)=>a.createdAt<b.createdAt?-1:1);
   const aRows=aOrders.length?aOrders.map(o=>{const its=toAssign.filter(i=>i.orderId===o.id);const unas=its.filter(i=>i.status==='requested').length;
-    const head=`<tr class="grp"><td colspan="5"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span><b>${esc(o.business)}</b> <span class="mono muted small">${esc(o.id)}</span> · ${esc(o.contact.phone)} · 접수 ${fmt(o.createdAt)} · 회신 기한 <b>${o.deadline?fmt(o.deadline):'—'}</b> · 가능 여부 ${esc(o.feasible||'확인중')} · 시트 상태 ${esc(o.status||'')}${o.note?` · <span class="muted">${esc(o.note)}</span>`:''}</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center"><span class="mini">이 접수 ${its.length}건 전체</span>${workerSelect('o:'+o.id)}<button class="btn btn-tonal btn-sm" data-action="assign-order" data-oid="${esc(o.id)}">전체 할당</button></span></div></td></tr>`;
-    const body=its.map(it=>`<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}</td><td class="c num">${fmt(it.createdAt)}</td><td class="c">${it.status==='assigned'?`<span class="pill assigned">${esc(workerName(it.workerId))} · 확인 대기</span><div class="sub">${fmt(it.assignedAt)} 할당</div>`:'<span class="pill requested">미할당</span>'}</td><td class="c" style="white-space:nowrap">${workerSelect(it.id,it.workerId)}<button class="btn ${it.status==='assigned'?'btn-outlined':'btn-filled'} btn-sm" data-action="assign" data-id="${esc(it.id)}">${it.status==='assigned'?'재할당':'할당'}</button></td></tr>`).join('');
+    const docs=o.status==='서류 대기';const cancelable=!itemsOf(o).some(i=>i.status==='done_claimed'||i.status==='approved');
+    const head=`<tr class="grp"><td colspan="5"><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span><b>${esc(o.business)}</b> <span class="mono muted small">${esc(o.id)}</span> · ${esc(o.contact.phone)}${o.email?` · ${esc(o.email)}`:''} · 접수 ${fmt(o.createdAt)} · ${docs?'<span class="pill requested">서류 대기 · 사업자등록증·이메일 미수신</span>':`회신 기한 <b>${o.deadline?fmt(o.deadline):'—'}</b> · 가능 여부 ${esc(o.feasible||'확인중')} · 시트 상태 ${esc(o.status||'')}`}${o.note?` · <span class="muted">${esc(o.note)}</span>`:''}</span><span style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">${o.statusLink?`<button class="btn btn-outlined btn-sm" data-action="copy-text" data-text="${esc(o.statusLink)}">조회 링크 복사</button>`:''}${docs?`<button class="btn btn-filled btn-sm" data-action="confirm-docs" data-oid="${esc(o.id)}">서류 확인 → 접수 완료</button>`:`<span class="mini">이 접수 ${its.length}건 전체</span>${workerSelect('o:'+o.id)}<button class="btn btn-tonal btn-sm" data-action="assign-order" data-oid="${esc(o.id)}">전체 할당</button>`}${cancelable?`<button class="btn btn-outlined btn-sm" data-action="cancel-order" data-oid="${esc(o.id)}">접수 취소</button>`:''}</span></div></td></tr>`;
+    const body=its.map(it=>`<tr><td class="n">${esc(itemNo(it))}</td><td class="c">${linkA(it.url)}</td><td class="c num">${fmt(it.createdAt)}</td><td class="c">${it.status==='assigned'?`<span class="pill assigned">${esc(workerName(it.workerId))} · 확인 대기</span><div class="sub">${fmt(it.assignedAt)} 할당</div>`:'<span class="pill requested">미할당</span>'}</td><td class="c" style="white-space:nowrap">${workerSelect(it.id,it.workerId)}<button class="btn ${it.status==='assigned'?'btn-outlined':'btn-filled'} btn-sm" data-action="assign" data-id="${esc(it.id)}" ${docs?'disabled title="서류 확인 후 할당할 수 있습니다"':''}>${it.status==='assigned'?'재할당':'할당'}</button></td></tr>`).join('');
     return head+body}).join('')
     :`<tr><td colspan="5" class="c"><div class="empty">할당 대기 건이 없습니다. 고객이 접수하면 여기에 쌓입니다.</div></td></tr>`;
   /* 승인 */
@@ -871,10 +883,10 @@ function viewSettle(){
   const wRows=S.workers.map(w=>{const mine=S.items.filter(i=>i.workerId===w.id);const done=mine.filter(i=>i.status==='approved'&&i.approvedAt&&ymd(i.approvedAt).startsWith(month)).length;const pendW=mine.filter(i=>i.status==='approved'&&i.payout.status==='pending').length;return `<tr><td class="c"><b>${esc(w.name)}</b><div class="sub">${w.active?'활성':'비활성 · 링크 차단됨'} · 등록 ${fmt(w.createdAt)}</div></td><td class="c"><input readonly class="mono" style="width:100%;font-size:12px;padding:4px 6px;border:1px solid var(--line-2);border-radius:6px;background:var(--bg-2);color:var(--ink)" value="${esc(w.link||'')}" id="wl-${esc(w.id)}"></td><td class="c num">${workerLoad(w)}</td><td class="c num">${done}</td><td class="c num">${usd(pendW*FEE_USD)}</td><td class="c" style="white-space:nowrap"><button class="btn btn-outlined btn-sm" data-action="copy" data-target="wl-${esc(w.id)}">링크 복사</button> <button class="btn btn-outlined btn-sm" data-action="w-token" data-id="${esc(w.id)}">링크 재발급</button> <button class="btn btn-outlined btn-sm" data-action="w-active" data-id="${esc(w.id)}" data-active="${w.active?'0':'1'}">${w.active?'비활성화':'다시 활성화'}</button></td></tr>`}).join('');
   const fxLabel=st.fxSource==='auto'?'자동 갱신 '+fmt(st.fxUpdatedAt)+(st.fxProvider?' · '+st.fxProvider:''):(st.fxSource==='manual'?'수동 입력 '+fmt(st.fxUpdatedAt):'기본값');
   return topbar('마스터 관리자',`<span>${esc(me)}</span><span class="sep"></span><span>${ymd()} · KST</span><button class="btn btn-outlined btn-sm" data-action="admin-logout"><span class="msym s18">logout</span>로그아웃</button>`)+`<div class="wrap dash">
-  <div class="dash-h"><div><h1>마스터 관리자</h1><div class="sub">접수 → 작업자 할당 → 작업자 삭제 완료 보고 → 마스터 승인(결제 예정) → 송금 후 결제 완료 기록. 승인한 건만 작업자 결제와 고객 청구 대상입니다. 모든 처리는 ${esc(me)} 이름으로 이력에 남습니다.</div></div><div><button class="btn btn-outlined" data-action="refresh"><span class="msym">refresh</span>새로고침</button></div></div>
-  <div class="kpis"><div class="kpi warn"><div class="l">할당 대기</div><div class="v">${toAssign.filter(i=>i.status==='requested').length}</div><div class="s">확인 대기 ${toAssign.filter(i=>i.status==='assigned').length}</div></div><div class="kpi"><div class="l">진행 중</div><div class="v">${inProg.length}</div><div class="s">반려 후 재작업 ${inProg.filter(i=>i.returns).length}</div></div><div class="kpi warn"><div class="l">승인 대기</div><div class="v">${queue.length}</div><div class="s">작업자 완료 보고</div></div><div class="kpi pink"><div class="l">결제 예정</div><div class="v">${usd(pend.length*FEE_USD)}</div><div class="s">${pend.length}건 · ≈ ${krw(pend.length*FEE_USD*fx)}</div></div><div class="kpi"><div class="l">고객 청구 예정</div><div class="v">${krw(unbilled.length*PRICE)}</div><div class="s">${unbilled.length}건 · VAT 별도</div></div><div class="kpi bad"><div class="l">미수금</div><div class="v">${krw(invoiced.length*PRICE*(1+VAT))}</div><div class="s">${invoiced.length}건 · VAT 포함</div></div><div class="kpi good"><div class="l">입금 완료</div><div class="v">${krw(paid.length*PRICE*(1+VAT))}</div><div class="s">${paid.length}건 · VAT 포함</div></div></div>
+  <div class="dash-h"><div><h1>마스터 관리자</h1><div class="sub">접수(카카오톡 채널로 사업자등록증·이메일 받고 "서류 확인") → 작업자 할당 → 작업자 삭제 완료 보고 → 마스터 승인(결제 예정) → 송금 후 결제 완료 기록. 승인한 건만 작업자 결제와 고객 청구 대상입니다. 모든 처리는 ${esc(me)} 이름으로 이력에 남습니다.</div></div><div><button class="btn btn-outlined" data-action="refresh"><span class="msym">refresh</span>새로고침</button></div></div>
+  <div class="kpis"><div class="kpi warn"><div class="l">할당 대기</div><div class="v">${toAssign.filter(i=>i.status==='requested').length}</div><div class="s">서류 대기 ${S.orders.filter(o=>o.status==='서류 대기').length}건 · 확인 대기 ${toAssign.filter(i=>i.status==='assigned').length}</div></div><div class="kpi"><div class="l">진행 중</div><div class="v">${inProg.length}</div><div class="s">반려 후 재작업 ${inProg.filter(i=>i.returns).length}</div></div><div class="kpi warn"><div class="l">승인 대기</div><div class="v">${queue.length}</div><div class="s">작업자 완료 보고</div></div><div class="kpi pink"><div class="l">결제 예정</div><div class="v">${usd(pend.length*FEE_USD)}</div><div class="s">${pend.length}건 · ≈ ${krw(pend.length*FEE_USD*fx)}</div></div><div class="kpi"><div class="l">고객 청구 예정</div><div class="v">${krw(unbilled.length*PRICE)}</div><div class="s">${unbilled.length}건 · VAT 별도</div></div><div class="kpi bad"><div class="l">미수금</div><div class="v">${krw(invoiced.length*PRICE*(1+VAT))}</div><div class="s">${invoiced.length}건 · VAT 포함</div></div><div class="kpi good"><div class="l">입금 완료</div><div class="v">${krw(paid.length*PRICE*(1+VAT))}</div><div class="s">${paid.length}건 · VAT 포함</div></div></div>
   <div class="split"><div>
-    <div class="sec-h"><h3>1. 할당</h3><span class="hint">고객이 접수한 리뷰를 작업자에게 배정합니다. 접수 단위로 전체 할당하거나 건별로 할당합니다.</span></div>
+    <div class="sec-h"><h3>1. 할당</h3><span class="hint">서류 대기 접수는 카카오톡 채널로 사업자등록증·이메일을 받은 뒤 "서류 확인"을 누르면 접수 완료가 되고 할당할 수 있습니다. 접수 단위로 전체 할당하거나 건별로 할당합니다.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">접수</th><th scope="col">현재</th><th scope="col">할당</th></tr></thead><tbody>${aRows}</tbody></table></div>
     <div class="sec-h"><h3>2. 승인</h3><span class="hint">작업자가 삭제 완료를 보고한 건. 링크를 직접 확인하고 승인하면 결제 예정으로 넘어갑니다.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호 · 고객 · 작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">완료 보고</th><th scope="col">처리</th></tr></thead><tbody>${qRows}</tbody></table></div>
@@ -885,7 +897,7 @@ function viewSettle(){
     <div class="sec-h"><h3>4. 고객 청구</h3><span class="hint">승인 건만 · ${krw(PRICE)}/건 VAT 별도 · 세금계산서</span></div>
     <div class="table-wrap"><table><thead><tr><th scope="col">고객</th><th scope="col">삭제 완료</th><th scope="col">청구액</th><th scope="col">상태</th><th scope="col">처리</th></tr></thead><tbody>${billRows}</tbody></table></div>
     <div class="sec-h"><h3>리뷰 링크 DB</h3><span class="hint">접수된 리뷰 전체. 복사 버튼은 현재 탭의 행을 엑셀용으로 복사합니다.</span><span style="margin-left:auto"><button class="btn btn-outlined btn-sm" data-action="copy-tsv"><span class="msym s18">content_copy</span>엑셀용 복사 (TSV)</button></span></div>
-    <div class="tabs" style="margin-top:6px">${dbTabBtn('all','전체')}${dbTabBtn('requested','접수')}${dbTabBtn('progress','진행 중')}${dbTabBtn('done_claimed','승인 대기')}${dbTabBtn('pending','결제 예정')}${dbTabBtn('paid','결제 완료')}${dbTabBtn('rejected','삭제 실패')}</div>
+    <div class="tabs" style="margin-top:6px">${dbTabBtn('all','전체')}${dbTabBtn('requested','접수')}${dbTabBtn('progress','진행 중')}${dbTabBtn('done_claimed','승인 대기')}${dbTabBtn('pending','결제 예정')}${dbTabBtn('paid','결제 완료')}${dbTabBtn('rejected','삭제 실패')}${dbTabBtn('cancelled','취소')}</div>
     <div class="sheet-wrap"><table class="sheet" style="min-width:1200px"><thead><tr><th scope="col" class="n">#</th><th scope="col">접수번호</th><th scope="col">고객</th><th scope="col">작업자</th><th scope="col" style="min-width:200px">리뷰 링크</th><th scope="col">상태</th><th scope="col">접수</th><th scope="col">승인</th><th scope="col">작업자 결제</th><th scope="col">고객 청구</th></tr></thead><tbody>${dbRows}</tbody></table></div>
     <div class="sec-h"><h3>작업자 계정</h3><span class="hint">이름만 넣으면 개인 링크가 만들어집니다. 그 링크를 작업자에게 보내면 됩니다. 링크가 새면 재발급, 그만두면 비활성화.</span></div>
     <div class="sheet-wrap"><table class="sheet"><thead><tr><th scope="col">작업자</th><th scope="col" style="min-width:280px">개인 링크</th><th scope="col" class="num">진행 중</th><th scope="col" class="num">이달 승인</th><th scope="col" class="num">결제 예정</th><th scope="col"></th></tr></thead><tbody>${wRows}</tbody></table></div>
@@ -929,7 +941,7 @@ document.addEventListener('click',e=>{
   else if(a==='refresh')render(true);
   else if(a==='ack')ack(id);else if(a==='claim')claim(id);else if(a==='reject')reject(id);
   else if(a==='assign')assign(id,selVal(id));else if(a==='assign-order')assignOrder(b.dataset.oid,selVal('o:'+b.dataset.oid));
-  else if(a==='approve')approve(id);else if(a==='return')returnItem(id);else if(a==='pay-worker')markPaidWorker(id);else if(a==='reopen')reopenItem(id);
+  else if(a==='approve')approve(id);else if(a==='return')returnItem(id);else if(a==='pay-worker')markPaidWorker(id);else if(a==='reopen')reopenItem(id);else if(a==='confirm-docs')confirmDocs(b.dataset.oid);else if(a==='cancel-order')cancelOrder(b.dataset.oid);else if(a==='copy-text')copyText(b.dataset.text||'');
   else if(a==='wtab'){UI.workerTab=b.dataset.tab;render()}
   else if(a==='dbtab'){UI.dbTab=b.dataset.tab;render()}
   else if(a==='invoice')invoiceOrder(b.dataset.oid);else if(a==='paid')paidOrder(b.dataset.oid);
